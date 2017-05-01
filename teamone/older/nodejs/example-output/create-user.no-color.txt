@@ -1,0 +1,150 @@
+Logging-in for user-less, application-level API access.
+ REQUEST
+    Requesting: POST /auth/oauth2/access
+   Body (JSON): {
+                  "client_id": "<CLIENT-ID-VALUE>",
+                  "client_secret": "<CLIENT-SECRET-VALUE>",
+                  "grant_type": "client_credentials"
+                }
+ RESPONSE
+   Status Code: 200
+   Body (JSON): {
+                  "refresh_token": "xvygg1zto6rb",
+                  "access_token": "r9dlc4vlsor",
+                  "token_type": "bearer"
+                }
+
+Confirming our access works by hitting /v2.0/ping/authed.
+ REQUEST
+    Requesting: GET /v2.0/ping/authed
+        Header: Authorization: Bearer r9dlc4vlsor
+ RESPONSE
+   Status Code: 200
+   Body (JSON): {
+                  "timestamp": 1424662734681
+                }
+
+Creating a new user.
+ REQUEST
+    Requesting: POST /v2.0/user
+        Header: Authorization: Bearer r9dlc4vlsor
+   Body (JSON): {
+                  "given_name": "Demo",
+                  "family_name": "User",
+                  "password": "<PASSWORD>",
+                  "email": "1424662383222-9585@example.org",
+                  "job_title": "Product Demonstrator",
+                  "tel_work": "(212) 853-5987"
+                }
+ RESPONSE
+   Status Code: 201
+   Body (JSON): {
+                  "user_id": "user785",
+                  "refresh_token": "3srr58vo39pb9u"
+                }
+
+Obtaining an access token for that new user.
+ REQUEST
+    Requesting: POST /auth/oauth2/access
+        Header: Authorization: Bearer r9dlc4vlsor
+   Body (JSON): {
+                  "refresh_token": "3srr58vo39pb9u",
+                  "client_id": "<CLIENT-ID-VALUE>",
+                  "client_secret": "<CLIENT-SECRET-VALUE>",
+                  "grant_type": "refresh_token"
+                }
+ RESPONSE
+   Status Code: 200
+   Body (JSON): {
+                  "access_token": "3pj3zhncdiy",
+                  "refresh_token": "3srr58vo39pb9u"
+                }
+
+Confirming our user-level access works by hitting /v2.0/ping/authed.
+ REQUEST
+    Requesting: GET /v2.0/ping/authed
+        Header: Authorization: Bearer 3pj3zhncdiy
+ RESPONSE
+   Status Code: 200
+   Body (JSON): {
+                  "timestamp": 1424662737471
+                }
+
+Get a list of the orgs the user has access to (should be empty).
+ REQUEST
+    Requesting: GET /v2.0/orgs
+        Header: Authorization: Bearer 3pj3zhncdiy
+ RESPONSE
+   Status Code: 200
+   Body (JSON): []
+
+Create a new org for that user.
+ REQUEST
+    Requesting: POST /v2.0/org
+        Header: Authorization: Bearer 3pj3zhncdiy
+   Body (JSON): {
+                  "name": "1424662383222-9585@example.org's Demo Org"
+                }
+ RESPONSE
+   Status Code: 201
+   Body (JSON): {
+                  "org_id": 411
+                }
+
+List the orgs again (should be non-empty).
+ REQUEST
+    Requesting: GET /v2.0/orgs
+        Header: Authorization: Bearer 3pj3zhncdiy
+ RESPONSE
+   Status Code: 200
+   Body (JSON): [
+                  {
+                    "org_id": 411,
+                    "name": "1424662383222-9585@example.org's Demo Org"
+                  }
+                ]
+
+List the workspaces in that org.
+ REQUEST
+    Requesting: GET /v2.0/org/411/workspaces
+        Header: Authorization: Bearer 3pj3zhncdiy
+ RESPONSE
+   Status Code: 200
+   Body (JSON): [
+                  {
+                    "workspace_id": 1802,
+                    "name": "Personal Workspace"
+                  }
+                ]
+
+List notes in that workspace.
+ REQUEST
+    Requesting: GET /v2.0/org/411/workspace/1802/notes
+        Header: Authorization: Bearer 3pj3zhncdiy
+ RESPONSE
+   Status Code: 200
+   Body (JSON): [
+                  {
+                    "note_id": 2500,
+                    "note_type": "NOTE",
+                    "title": "Welcome to your first note in Intellinote!",
+                    "viewed": false,
+                    "state": "ACTIVE",
+                    "creator": {
+                      "user_id": "user785",
+                      "given_name": "Demo",
+                      "family_name": "User"
+                    },
+                    "workspace": {
+                      "workspace_id": 1802,
+                      "name": "Personal Workspace"
+                    },
+                    "tags": [
+                      {
+                        "tag_id": 2342,
+                        "label": "GettingStarted",
+                        "LABEL": "GETTINGSTARTED"
+                      }
+                    ]
+                  }
+                ]

@@ -1,0 +1,258 @@
+[7m[1m[34m                                     START                                      [39m[22m[27m
+
+
+[4m[1m[34m                      Step One: Get the Authorization Code                      [39m[22m[24m
+
+ The first step in an OAuth2 authorization process is normally a manual one.
+
+ Before Intellinote can allow our application to access Intellinote on the
+ user's behalf, the user must explicitly "grant" our application access to
+ his or her account.
+
+ The process works like this:
+
+ 1. We will direct the user to a special URL at Intellinote.
+
+ 2. Intellinote will ask the user to log in (if he hasn't already) and to
+    approve our application's access (if he hasn't already).
+
+ 3. Once the user has been authenticated and authorized our application to
+    act on his behalf, Intellinote will redirect the user back to our site
+    (to a URL we specify) with a special [1m[4mauthorization code[24m[22m value appended
+    to the URL as a query string parameter.
+
+    This authorization code is our proof that the user granted access to
+    our application.
+
+ Later, our application will be able to trade that authorization code for an
+ [1m[4maccess token[24m[22m that will act as our application's credential when accessing
+ Intellinote for that user. (That step is described in more detail below.)
+
+ Typically this is a one-time action. Once the user has granted access, our
+ application will be able to obtain new access tokens without direct action
+ on the user's part -- the user doesn't even need to be online.
+
+ For the purpose of this demonstration, we will pretend to be the end-user's
+ web browser and complete this step programmatically, but in practice we
+ won't have to worry about this step. We'll just send the user to Intellinote
+ and wait for him to come back with an authorization code.
+
+[1m[34mEnabling cookies since we're pretending to act as the end-user's browser.[39m[22m
+ Done.
+
+[1m[34mLogging in as user "[1m[4mrod.<REDACTED>.net[24m[1m".[39m[22m
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mPOST /log-in[39m
+[90m   Body (Form): [33m{[90m
+                  [32m"username"[90m[93m:[90m [92m"rod.<REDACTED>.net"[90m[32m,[90m
+                  [32m"password"[90m[93m:[90m [92m"<REDACTED>"[90m
+                [33m}[90m[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m302[39m
+   [90m     Header: [39m[35mLocation: /api/rest/[39m
+
+ Logged in.
+
+[1m[34mRequesting authorization code from "[1m[4mrod.<REDACTED>.net[24m[1m"[39m[22m
+[1m[34mfor scope "[1m[4mread,write[24m[1m".[39m[22m
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mGET /auth/oauth2/authorization?response_type=code&client_id=ei06n5poF0n6COmn&scope=read,write&redirect_uri=/[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m302[39m
+   [90m     Header: [39m[35mLocation: /?code=zmy739bnk6vtpgb9[39m
+
+ Got a [1m[4m302[24m[22m response to request for an authorization code.
+ The user must have already granted access.
+ [32mFound authorization code "[1m[4mzmy739bnk6vtpgb9[24m[22m".[39m
+
+
+[4m[1m[34m                         Step Two: Get an Access Token                          [39m[22m[24m
+
+ Now that we have an [1m[4mauthorization code[24m[22m that certifies that the end-user has
+ authorized our application to access his or her account, we can exchange it
+ for an [1m[4maccess token[24m[22m that we'll include in our actual API calls.
+
+ To get the access token, we submit a POST request to Intellinote, including:
+   - the [1m[4mauthorization code[24m[22m
+   - our [1m[4mclient id[24m[22m (as assigned by Intellinote)
+   - our [1m[4mclient secret[24m[22m (as assigned by Intellinote)
+   - the value [1m[4mgrant_type=authorization_code[24m[22m
+ in a JSON document within the request body.
+
+ If all goes well, Intellinote will respond with a JSON document that contains
+ our access token.
+
+ An access token acts as a type of credential. When we include it within the
+ HTTP request header named "Authorization", Intellinote will allow our
+ application to execute an API method on behalf of the user.
+
+ An access token is a [4mtemporary[24m credential. It will eventually become "stale".
+ When that happens, Intellinote will start to return an HTTP 401 (Unauthorized)
+ response to our API calls. When this happens we can request a new access token
+ using a [1m[4mrefresh token[24m[22m that will also be returned by this call.
+
+ (The use of the refresh token is described in detail below.)
+
+[1m[34mDisabling cookies since we're done pretending to act as the end-user's browser.[39m[22m
+ Done. From now on all calls are server-to-server calls without cookies.
+
+[1m[34mRequesting access token and refresh token using code "[1m[4mzmy739bnk6vtpgb9[24m[1m".[39m[22m
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mPOST /auth/oauth2/access[39m
+[90m   Body (JSON): [33m{[90m
+                  [32m"code"[90m[93m:[90m [92m"zmy739bnk6vtpgb9"[90m[32m,[90m
+                  [32m"client_id"[90m[93m:[90m [92m"ei06n5poF0n6COmn"[90m[32m,[90m
+                  [32m"client_secret"[90m[93m:[90m [92m"<REDACTED>"[90m[32m,[90m
+                  [32m"grant_type"[90m[93m:[90m [92m"authorization_code"[90m
+                [33m}[90m[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m{[90m
+                  [32m"refresh_token"[90m[93m:[90m [92m"43vee5p0ouipy14iuz6uvemndf1xajor"[90m[32m,[90m
+                  [32m"access_token"[90m[93m:[90m [92m"889trp724o9od2t9j75o7tbtxc6ry66r"[90m[32m,[90m
+                  [32m"token_type"[90m[93m:[90m [92m"bearer"[90m
+                [33m}[90m[39m
+
+ Done.
+ [32mFound access_token "[1m[4m889trp724o9od2t9j75o7tbtxc6ry66r[24m[22m".[39m
+ [32mFound refresh_token "[1m[4m43vee5p0ouipy14iuz6uvemndf1xajor[24m[22m".[39m
+
+
+[4m[1m[34m                        Step Three: Use the Access Token                        [39m[22m[24m
+
+ Now that we have an [1m[4maccess token[24m[22m, we simply need to include it in our API
+ calls within the [1m[4mAuthorization[24m[22m request header, like this:
+
+     Authorization: Bearer <ACCESS TOKEN VALUE>
+
+ Intellinote will use this value to determine:
+   - which application is making the call, and
+   - which user's data the application is trying to access.
+
+[1m[34mSetting Authorization Header[39m[22m
+ Setting Authorization header to "[1m[4mBearer 889trp724o9od2t9j75o7tbtxc6ry66r[24m[22m"
+ for all subsequent requests.
+ Done.
+
+[1m[34mUsing the access token to invoke API methods.[39m[22m
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mGET /v2.0/orgs[39m
+[90m        Header: [39m[35mAuthorization: Bearer 889trp724o9od2t9j75o7tbtxc6ry66r[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m[[90m
+                  [33m{[90m
+                    [32m"org_id"[90m[93m:[90m [34m5[90m[32m,[90m
+                    [32m"name"[90m[93m:[90m [92m"Rod-Sandbox's Organization"[90m
+                  [33m}[90m
+                [33m][90m[39m
+
+ [32mFound org_id "[1m[4mnull[24m[22m".[39m
+ Done.
+
+[4m[1m[34m                            Refresh the Access Token                            [39m[22m[24m
+
+ As mentioned above, our [1m[4maccess token[24m[22m will eventually expire and stop working.
+ When this happens we can use our [1m[4mrefresh token[24m[22m to obtain a new one.
+
+ The refresh call is very similar to the call that used the authorization code
+ to obtain the initial access and refresh tokens.
+
+ To refresh the access token, we submit a POST request to Intellinote, including:
+   - the [1m[4mrefresh token[24m[22m
+   - our [1m[4mclient id[24m[22m (as assigned by Intellinote)
+   - our [1m[4mclient secret[24m[22m (as assigned by Intellinote)
+   - the value [1m[4mgrant_type=refresh_token[24m[22m
+ in a JSON document within the request body.
+
+ If all goes well, Intellinote will respond with a JSON document that contains
+ our new access token.
+
+ Intellinote may also return a new refresh token value. If it does, we should
+ use this new refresh token the next time we want to refresh the access token.
+
+[1m[34mClearing access_token to pretend as if the access token has expired.[39m[22m
+ Done.
+
+[1m[34mRequesting a NEW access token using the refresh token[39m[22m
+[1m[34m"[1m[4m43vee5p0ouipy14iuz6uvemndf1xajor[24m[1m".[39m[22m
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mPOST /auth/oauth2/access[39m
+[90m   Body (JSON): [33m{[90m
+                  [32m"refresh_token"[90m[93m:[90m [92m"43vee5p0ouipy14iuz6uvemndf1xajor"[90m[32m,[90m
+                  [32m"client_id"[90m[93m:[90m [92m"ei06n5poF0n6COmn"[90m[32m,[90m
+                  [32m"client_secret"[90m[93m:[90m [92m"<REDACTED>"[90m[32m,[90m
+                  [32m"grant_type"[90m[93m:[90m [92m"refresh_token"[90m
+                [33m}[90m[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m{[90m
+                  [32m"access_token"[90m[93m:[90m [92m"6fh9htj33d0wcdinzz37i5t7ali8uxr3"[90m[32m,[90m
+                  [32m"refresh_token"[90m[93m:[90m [92m"43vee5p0ouipy14iuz6uvemndf1xajor"[90m
+                [33m}[90m[39m
+
+ Done.
+ [32mFound NEW access_token "[1m[4m6fh9htj33d0wcdinzz37i5t7ali8uxr3[24m[22m".[39m
+ [32mFound refresh_token "[1m[4m43vee5p0ouipy14iuz6uvemndf1xajor[24m[22m".[39m
+
+[1m[34mSetting Authorization Header[39m[22m
+ Setting Authorization header to "[1m[4mBearer 6fh9htj33d0wcdinzz37i5t7ali8uxr3[24m[22m"
+ for all subsequent requests.
+ Done.
+
+[4m[1m[34m                            Use the NEW Access Token                            [39m[22m[24m
+
+[1m[34mUsing NEW access code to invoke API.[39m[22m
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mGET /v2.0/org/5/workspaces[39m
+[90m        Header: [39m[35mAuthorization: Bearer 6fh9htj33d0wcdinzz37i5t7ali8uxr3[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m[[90m
+                  [33m{[90m
+                    [32m"workspace_id"[90m[93m:[90m [34m4[90m[32m,[90m
+                    [32m"name"[90m[93m:[90m [92m"Personal Workspace"[90m
+                  [33m}[90m
+                [33m][90m[39m
+
+ [32mFound workspace_id "[1m[4m5[24m[22m".[39m
+ Done.
+[1m[34mUsing NEW access code to invoke API again.[39m[22m
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mGET /v2.0/org/5/workspace/4/notes[39m
+[90m        Header: [39m[35mAuthorization: Bearer 6fh9htj33d0wcdinzz37i5t7ali8uxr3[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m[[90m
+                  [33m{[90m
+                    [32m"note_id"[90m[93m:[90m [34m4[90m[32m,[90m
+                    [32m"note_type"[90m[93m:[90m [92m"NOTE"[90m[32m,[90m
+                    [32m"title"[90m[93m:[90m [92m"Welcome to your first note in Intellinote!"[90m[32m,[90m
+                    [32m"viewed"[90m[93m:[90m [91mtrue[90m[32m,[90m
+                    [32m"state"[90m[93m:[90m [92m"ACTIVE"[90m[32m,[90m
+                    [32m"creator"[90m[93m:[90m [33m{[90m
+                      [32m"user_id"[90m[93m:[90m [92m"user2"[90m[32m,[90m
+                      [32m"given_name"[90m[93m:[90m [92m"Rod-Sandbox"[90m[32m,[90m
+                      [32m"family_name"[90m[93m:[90m [92m"Smith"[90m
+                    [33m}[90m[32m,[90m
+                    [32m"workspace"[90m[93m:[90m [33m{[90m
+                      [32m"workspace_id"[90m[93m:[90m [34m4[90m[32m,[90m
+                      [32m"name"[90m[93m:[90m [92m"Personal Workspace"[90m
+                    [33m}[90m[32m,[90m
+                    [32m"tags"[90m[93m:[90m [33m[[90m
+                      [33m{[90m
+                        [32m"tag_id"[90m[93m:[90m [34m4[90m[32m,[90m
+                        [32m"label"[90m[93m:[90m [92m"GettingStarted"[90m[32m,[90m
+                        [32m"LABEL"[90m[93m:[90m [92m"GETTINGSTARTED"[90m
+                      [33m}[90m
+                    [33m][90m
+                  [33m}[90m
+                [33m][90m[39m
+
+ Done.
+
+[4m[1m[34m                                                                                [39m[22m[24m
+
+ [32mALL DONE.[39m
+
+[7m[1m[34m                                      END                                       [39m[22m[27m

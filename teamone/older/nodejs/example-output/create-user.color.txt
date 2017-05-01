@@ -1,0 +1,150 @@
+Logging-in for user-less, application-level API access.
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mPOST /auth/oauth2/access[39m
+[90m   Body (JSON): [33m{[90m
+                  [32m"client_id"[90m[93m:[90m [92m"<CLIENT-ID-VALUE>"[90m[32m,[90m
+                  [32m"client_secret"[90m[93m:[90m [92m"<CLIENT-SECRET-VALUE>"[90m[32m,[90m
+                  [32m"grant_type"[90m[93m:[90m [92m"client_credentials"[90m
+                [33m}[90m[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m{[90m
+                  [32m"refresh_token"[90m[93m:[90m [92m"z1igy9s1"[90m[32m,[90m
+                  [32m"access_token"[90m[93m:[90m [92m"960hn1s9py14i"[90m[32m,[90m
+                  [32m"token_type"[90m[93m:[90m [92m"bearer"[90m
+                [33m}[90m[39m
+
+Confirming our access works by hitting /v2.0/ping/authed.
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mGET /v2.0/ping/authed[39m
+[90m        Header: [39m[35mAuthorization: Bearer 960hn1s9py14i[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m{[90m
+                  [32m"timestamp"[90m[93m:[90m [34m1424662779607[90m
+                [33m}[90m[39m
+
+Creating a new user.
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mPOST /v2.0/user[39m
+[90m        Header: [39m[35mAuthorization: Bearer 960hn1s9py14i[39m
+[90m   Body (JSON): [33m{[90m
+                  [32m"given_name"[90m[93m:[90m [92m"Demo"[90m[32m,[90m
+                  [32m"family_name"[90m[93m:[90m [92m"User"[90m[32m,[90m
+                  [32m"password"[90m[93m:[90m [92m"<PASSWORD>"[90m[32m,[90m
+                  [32m"email"[90m[93m:[90m [92m"1424662428090-8374@example.org"[90m[32m,[90m
+                  [32m"job_title"[90m[93m:[90m [92m"Product Demonstrator"[90m[32m,[90m
+                  [32m"tel_work"[90m[93m:[90m [92m"(212) 853-5987"[90m
+                [33m}[90m[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m201[39m
+   [90mBody (JSON): [33m{[90m
+                  [32m"user_id"[90m[93m:[90m [92m"user786"[90m[32m,[90m
+                  [32m"refresh_token"[90m[93m:[90m [92m"x9x8orxd96b3"[90m
+                [33m}[90m[39m
+
+Obtaining an access token for that new user.
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mPOST /auth/oauth2/access[39m
+[90m        Header: [39m[35mAuthorization: Bearer 960hn1s9py14i[39m
+[90m   Body (JSON): [33m{[90m
+                  [32m"refresh_token"[90m[93m:[90m [92m"x9x8orxd96b3"[90m[32m,[90m
+                  [32m"client_id"[90m[93m:[90m [92m"<CLIENT-ID-VALUE>"[90m[32m,[90m
+                  [32m"client_secret"[90m[93m:[90m [92m"<CLIENT-SECRET-VALUE>"[90m[32m,[90m
+                  [32m"grant_type"[90m[93m:[90m [92m"refresh_token"[90m
+                [33m}[90m[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m{[90m
+                  [32m"access_token"[90m[93m:[90m [92m"0tn2cg59k"[90m[32m,[90m
+                  [32m"refresh_token"[90m[93m:[90m [92m"x9x8orxd96b3"[90m
+                [33m}[90m[39m
+
+Confirming our user-level access works by hitting /v2.0/ping/authed.
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mGET /v2.0/ping/authed[39m
+[90m        Header: [39m[35mAuthorization: Bearer 0tn2cg59k[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m{[90m
+                  [32m"timestamp"[90m[93m:[90m [34m1424662782243[90m
+                [33m}[90m[39m
+
+Get a list of the orgs the user has access to (should be empty).
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mGET /v2.0/orgs[39m
+[90m        Header: [39m[35mAuthorization: Bearer 0tn2cg59k[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m[[90m[33m][90m[39m
+
+Create a new org for that user.
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mPOST /v2.0/org[39m
+[90m        Header: [39m[35mAuthorization: Bearer 0tn2cg59k[39m
+[90m   Body (JSON): [33m{[90m
+                  [32m"name"[90m[93m:[90m [92m"1424662428090-8374@example.org's Demo Org"[90m
+                [33m}[90m[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m201[39m
+   [90mBody (JSON): [33m{[90m
+                  [32m"org_id"[90m[93m:[90m [34m412[90m
+                [33m}[90m[39m
+
+List the orgs again (should be non-empty).
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mGET /v2.0/orgs[39m
+[90m        Header: [39m[35mAuthorization: Bearer 0tn2cg59k[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m[[90m
+                  [33m{[90m
+                    [32m"org_id"[90m[93m:[90m [34m412[90m[32m,[90m
+                    [32m"name"[90m[93m:[90m [92m"1424662428090-8374@example.org's Demo Org"[90m
+                  [33m}[90m
+                [33m][90m[39m
+
+List the workspaces in that org.
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mGET /v2.0/org/412/workspaces[39m
+[90m        Header: [39m[35mAuthorization: Bearer 0tn2cg59k[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m[[90m
+                  [33m{[90m
+                    [32m"workspace_id"[90m[93m:[90m [34m1804[90m[32m,[90m
+                    [32m"name"[90m[93m:[90m [92m"Personal Workspace"[90m
+                  [33m}[90m
+                [33m][90m[39m
+
+List notes in that workspace.
+[90m REQUEST[39m
+[90m    Requesting: [39m[35mGET /v2.0/org/412/workspace/1804/notes[39m
+[90m        Header: [39m[35mAuthorization: Bearer 0tn2cg59k[39m
+[90m RESPONSE[39m
+   [90mStatus Code: [39m[35m200[39m
+   [90mBody (JSON): [33m[[90m
+                  [33m{[90m
+                    [32m"note_id"[90m[93m:[90m [34m2502[90m[32m,[90m
+                    [32m"note_type"[90m[93m:[90m [92m"NOTE"[90m[32m,[90m
+                    [32m"title"[90m[93m:[90m [92m"Welcome to your first note in Intellinote!"[90m[32m,[90m
+                    [32m"viewed"[90m[93m:[90m [91mfalse[90m[32m,[90m
+                    [32m"state"[90m[93m:[90m [92m"ACTIVE"[90m[32m,[90m
+                    [32m"creator"[90m[93m:[90m [33m{[90m
+                      [32m"user_id"[90m[93m:[90m [92m"user786"[90m[32m,[90m
+                      [32m"given_name"[90m[93m:[90m [92m"Demo"[90m[32m,[90m
+                      [32m"family_name"[90m[93m:[90m [92m"User"[90m
+                    [33m}[90m[32m,[90m
+                    [32m"workspace"[90m[93m:[90m [33m{[90m
+                      [32m"workspace_id"[90m[93m:[90m [34m1804[90m[32m,[90m
+                      [32m"name"[90m[93m:[90m [92m"Personal Workspace"[90m
+                    [33m}[90m[32m,[90m
+                    [32m"tags"[90m[93m:[90m [33m[[90m
+                      [33m{[90m
+                        [32m"tag_id"[90m[93m:[90m [34m2344[90m[32m,[90m
+                        [32m"label"[90m[93m:[90m [92m"GettingStarted"[90m[32m,[90m
+                        [32m"LABEL"[90m[93m:[90m [92m"GETTINGSTARTED"[90m
+                      [33m}[90m
+                    [33m][90m
+                  [33m}[90m
+                [33m][90m[39m

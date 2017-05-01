@@ -1,0 +1,22 @@
+{
+  "name": "botkit-teamone",
+  "description": "Adds Team-One support to Botkit (<https://github.com/howdyai/botkit>).",
+  "version": "0.9.0",
+  "author": "BroadSoft Team Collaboration",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/intellinote/sample-code.git"
+  },
+  "bugs": {
+    "url": "https://github.com/intellinote/sample-code/issues"
+  },
+  "dependencies": {
+    "botkit": "^0.4",
+    "ws": "^1.1"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.11"
+  },
+  "main": "lib/index.js"
+}

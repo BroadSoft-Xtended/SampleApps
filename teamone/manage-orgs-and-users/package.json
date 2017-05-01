@@ -1,0 +1,23 @@
+{
+  "name": "manage-orgs-and-users",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "author": "Intellionte / BroadSoft Team Collaboration",
+  "dependencies": {
+    "inote-util": "^1.7.2",
+    "request": "2.48.x"
+  },
+  "devDependencies": {
+    "docco": "^0.7"
+  },
+  "main": "lib/manage-orgs-and-users.js",
+  "scripts": {
+    "doc":"./node_modules/.bin/docco lib/manage-orgs-and-users.js",
+    "docco":"./node_modules/.bin/docco lib/manage-orgs-and-users.js",
+    "it":"node lib/manage-orgs-and-users.js"
+  },
+  "engines": {
+    "node": "^4.4.4"
+  }
+}

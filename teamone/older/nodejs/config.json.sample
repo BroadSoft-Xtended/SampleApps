@@ -1,0 +1,14 @@
+{
+  "server": {
+    "scheme":"https://",
+    "host": "sandbox.intellinote.net",
+    "port": 443,
+    "base": "/api/rest"
+  },
+  "oauth": {
+    "client_id": "",
+    "client_secret":"",
+    "scope": "read,write",
+    "redirect_uri": "/"
+  }
+}

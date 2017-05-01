@@ -1,0 +1,6 @@
+{
+  "oauth": {
+    "client_id": "ENTER YOUR CLIENT ID HERE",
+    "client_secret":"ENTER YOUR CLIENT SECRET HERE"
+  }
+}
