@@ -1,6 +1,6 @@
 Current examples:
 
- * `lib/oauth-annotated.js` - example of using the OAuth2 protocol to authenticate to the Intellinote API and access user content via the Intellinote REST API.
+ * `lib/oauth-annotated.js` - example of using the OAuth2 protocol to authenticate to the Team-One API and access user content via the Team-One REST API.
 
     * See `example-output/oauth-annotated.color.txt` and `example-output/oauth-annotated.no-color.txt` for sample outputs from that script.
 

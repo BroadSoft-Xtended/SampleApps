@@ -1,4 +1,4 @@
-This directory contains Java-based examples of using the Intellinote APIs.
+This directory contains Java-based examples of using the Team-One APIs.
 
 **CreateUser.java** (`src/main/java/net/intellinote/sample/CreateUser.java`)
 
@@ -18,7 +18,7 @@ Demonstrates:
 3. authenticating on behalf of one of those users using the OAuth2 "refresh-token" grant.
 4. acting as that user to create a new organization and workspace.
 5. acting as that user to add other users to the shared organization and workspace
-6. using the HMAC-based Single-Sign-On protocol to generate a link that authenticates as one of those users and launches Intellinote directly into that shared workspace.
+6. using the HMAC-based Single-Sign-On protocol to generate a link that authenticates as one of those users and launches Team-One directly into that shared workspace.
 
 **To run these examples** you can do one of the following:
 

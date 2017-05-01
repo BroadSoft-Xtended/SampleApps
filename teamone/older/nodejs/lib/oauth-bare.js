@@ -1,6 +1,6 @@
 /*
  * oauth-bare.js - this script demonstrates how to use the OAuth2 protocol to
- *                 access Intellinote on behalf of an end-user.
+ *                 access Team-One on behalf of an end-user.
  *
  * See `oauth-annotated.js` for more information.
  */

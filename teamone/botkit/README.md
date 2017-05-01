@@ -1,6 +1,6 @@
 # Use Botkit to create (or port) bots for Team-One
 
-This module contains an (experimental) [Botkit](https://github.com/howdyai/botkit) connector for [Team-One (Intellinote)](https://www.intellinote.net/).
+This module contains an (experimental) [Botkit](https://github.com/howdyai/botkit) connector for [Team-One](https://www.intellinote.net/).
 
 Using this module, it is trivial to "port" many Botkit-based bots to Team-One.
 
@@ -27,7 +27,7 @@ For more information, this introduction to the [Team-One Real-Time / Bot API](ht
 
 ## Creating your bot
 
-1) Create a "bot user" within Team-One / Intellinote. (Or use your existing account to create a bot that acts as "you".)
+1) Create a "bot user" within Team-One / Team-One. (Or use your existing account to create a bot that acts as "you".)
 
 2) Create an API token for that user at <https://app.intellinote.net/rest/account/api-tokens>.
 

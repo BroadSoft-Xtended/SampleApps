@@ -6,7 +6,7 @@
 // ## Contents
 //
 //  * [An Introduction and Some Background](#an-introduction-and-some-background)
-//     * [About the Team-One (Intellinote) API](#about-the-team-one-intellinote-api)
+//     * [About the Team-One API](#about-the-team-one)
 //     * [About this File](#about-this-file)
 //  * [The Program](#the-program)
 //     * [A Note on Structure](#a-note-on-structure)
@@ -21,9 +21,9 @@
 //
 // ## An Introduction and Some Background
 //
-// ### About the Team-One (Intellinote) API
+// ### About the Team-One API
 //
-// Team-One (Intellinote) provides a RESTful (JSON-over-HTTP) web service API
+// Team-One provides a RESTful (JSON-over-HTTP) web service API
 // that allows API clients to perform virtually any action that can be performed
 // via the web, desktop or mobile user interaces (and a few actions that cannot
 // be performed directly via the UI-clients).
@@ -1021,7 +1021,7 @@ function readResponseAsJSON (err, response, body, callback) {
 
 // #### randomEmail
 
-// In Intellinote/Team-One, email addresses must be unique.
+// In Team-One, email addresses must be unique.
 // So that we can run this program multiple times, we'll
 // use the `randomEmail` method to generate a (probably) unique
 // email address on-the-fly.

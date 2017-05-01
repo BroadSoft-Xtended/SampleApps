@@ -5,19 +5,19 @@
 
  The first step in an OAuth2 authorization process is normally a manual one.
 
- Before Intellinote can allow our application to access Intellinote on the
+ Before Team-One can allow our application to access Team-One on the
  user's behalf, the user must explicitly "grant" our application access to
  his or her account.
 
  The process works like this:
 
- 1. We will direct the user to a special URL at Intellinote.
+ 1. We will direct the user to a special URL at Team-One.
 
- 2. Intellinote will ask the user to log in (if he hasn't already) and to
+ 2. Team-One will ask the user to log in (if he hasn't already) and to
     approve our application's access (if he hasn't already).
 
  3. Once the user has been authenticated and authorized our application to
-    act on his behalf, Intellinote will redirect the user back to our site
+    act on his behalf, Team-One will redirect the user back to our site
     (to a URL we specify) with a special [1m[4mauthorization code[24m[22m value appended
     to the URL as a query string parameter.
 
@@ -26,7 +26,7 @@
 
  Later, our application will be able to trade that authorization code for an
  [1m[4maccess token[24m[22m that will act as our application's credential when accessing
- Intellinote for that user. (That step is described in more detail below.)
+ Team-One for that user. (That step is described in more detail below.)
 
  Typically this is a one-time action. Once the user has granted access, our
  application will be able to obtain new access tokens without direct action
@@ -34,7 +34,7 @@
 
  For the purpose of this demonstration, we will pretend to be the end-user's
  web browser and complete this step programmatically, but in practice we
- won't have to worry about this step. We'll just send the user to Intellinote
+ won't have to worry about this step. We'll just send the user to Team-One
  and wait for him to come back with an authorization code.
 
 [1m[34mEnabling cookies since we're pretending to act as the end-user's browser.[39m[22m
@@ -72,22 +72,22 @@
  authorized our application to access his or her account, we can exchange it
  for an [1m[4maccess token[24m[22m that we'll include in our actual API calls.
 
- To get the access token, we submit a POST request to Intellinote, including:
+ To get the access token, we submit a POST request to Team-One, including:
    - the [1m[4mauthorization code[24m[22m
-   - our [1m[4mclient id[24m[22m (as assigned by Intellinote)
-   - our [1m[4mclient secret[24m[22m (as assigned by Intellinote)
+   - our [1m[4mclient id[24m[22m (as assigned by Team-One)
+   - our [1m[4mclient secret[24m[22m (as assigned by Team-One)
    - the value [1m[4mgrant_type=authorization_code[24m[22m
  in a JSON document within the request body.
 
- If all goes well, Intellinote will respond with a JSON document that contains
+ If all goes well, Team-One will respond with a JSON document that contains
  our access token.
 
  An access token acts as a type of credential. When we include it within the
- HTTP request header named "Authorization", Intellinote will allow our
+ HTTP request header named "Authorization", Team-One will allow our
  application to execute an API method on behalf of the user.
 
  An access token is a [4mtemporary[24m credential. It will eventually become "stale".
- When that happens, Intellinote will start to return an HTTP 401 (Unauthorized)
+ When that happens, Team-One will start to return an HTTP 401 (Unauthorized)
  response to our API calls. When this happens we can request a new access token
  using a [1m[4mrefresh token[24m[22m that will also be returned by this call.
 
@@ -125,7 +125,7 @@
 
      Authorization: Bearer <ACCESS TOKEN VALUE>
 
- Intellinote will use this value to determine:
+ Team-One will use this value to determine:
    - which application is making the call, and
    - which user's data the application is trying to access.
 
@@ -158,17 +158,17 @@
  The refresh call is very similar to the call that used the authorization code
  to obtain the initial access and refresh tokens.
 
- To refresh the access token, we submit a POST request to Intellinote, including:
+ To refresh the access token, we submit a POST request to Team-One, including:
    - the [1m[4mrefresh token[24m[22m
-   - our [1m[4mclient id[24m[22m (as assigned by Intellinote)
-   - our [1m[4mclient secret[24m[22m (as assigned by Intellinote)
+   - our [1m[4mclient id[24m[22m (as assigned by Team-One)
+   - our [1m[4mclient secret[24m[22m (as assigned by Team-One)
    - the value [1m[4mgrant_type=refresh_token[24m[22m
  in a JSON document within the request body.
 
- If all goes well, Intellinote will respond with a JSON document that contains
+ If all goes well, Team-One will respond with a JSON document that contains
  our new access token.
 
- Intellinote may also return a new refresh token value. If it does, we should
+ Team-One may also return a new refresh token value. If it does, we should
  use this new refresh token the next time we want to refresh the access token.
 
 [1m[34mClearing access_token to pretend as if the access token has expired.[39m[22m
@@ -227,7 +227,7 @@
                   [33m{[90m
                     [32m"note_id"[90m[93m:[90m [34m4[90m[32m,[90m
                     [32m"note_type"[90m[93m:[90m [92m"NOTE"[90m[32m,[90m
-                    [32m"title"[90m[93m:[90m [92m"Welcome to your first note in Intellinote!"[90m[32m,[90m
+                    [32m"title"[90m[93m:[90m [92m"Welcome to your first note in Team-One!"[90m[32m,[90m
                     [32m"viewed"[90m[93m:[90m [91mtrue[90m[32m,[90m
                     [32m"state"[90m[93m:[90m [92m"ACTIVE"[90m[32m,[90m
                     [32m"creator"[90m[93m:[90m [33m{[90m

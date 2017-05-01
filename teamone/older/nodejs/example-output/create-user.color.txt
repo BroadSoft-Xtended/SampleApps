@@ -127,7 +127,7 @@ List notes in that workspace.
                   [33m{[90m
                     [32m"note_id"[90m[93m:[90m [34m2502[90m[32m,[90m
                     [32m"note_type"[90m[93m:[90m [92m"NOTE"[90m[32m,[90m
-                    [32m"title"[90m[93m:[90m [92m"Welcome to your first note in Intellinote!"[90m[32m,[90m
+                    [32m"title"[90m[93m:[90m [92m"Welcome to your first note in Team-one!"[90m[32m,[90m
                     [32m"viewed"[90m[93m:[90m [91mfalse[90m[32m,[90m
                     [32m"state"[90m[93m:[90m [92m"ACTIVE"[90m[32m,[90m
                     [32m"creator"[90m[93m:[90m [33m{[90m

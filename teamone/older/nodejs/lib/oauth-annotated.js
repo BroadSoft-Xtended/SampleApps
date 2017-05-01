@@ -1,6 +1,6 @@
 /*
  * oauth-annotated.js - this script demonstrates how to use the OAuth2 protocol to
- *                      access Intellinote on behalf of an end-user.
+ *                      access Team-One on behalf of an end-user.
  *
  * This script both contains and generates a moderately large amount of commentary
  * on what is going on within the script.  For a less verbose example, see the
@@ -53,19 +53,19 @@ S.next(function(next){
   F.H2("Step One: Get the Authorization Code");
   F.p("The first step in an OAuth2 authorization process is normally a manual one.");
   F.p();
-  F.p("Before Intellinote can allow our application to access Intellinote on the ");
+  F.p("Before Team-One can allow our application to access Team-One on the ");
   F.p("user's behalf, the user must explicitly \"grant\" our application access to");
   F.p("his or her account.");
   F.p();
   F.p("The process works like this:");
   F.p();
-  F.p("1. We will direct the user to a special URL at Intellinote.");
+  F.p("1. We will direct the user to a special URL at Team-One.");
   F.p();
-  F.p("2. Intellinote will ask the user to log in (if he hasn't already) and to");
+  F.p("2. Team-One will ask the user to log in (if he hasn't already) and to");
   F.p("   approve our application's access (if he hasn't already).");
   F.p();
   F.p("3. Once the user has been authenticated and authorized our application to");
-  F.p("   act on his behalf, Intellinote will redirect the user back to our site ");
+  F.p("   act on his behalf, Team-One will redirect the user back to our site ");
   F.p("   (to a URL we specify) with a special "+F.ub("authorization code")+" value appended");
   F.p("   to the URL as a query string parameter.");
   F.p();
@@ -74,7 +74,7 @@ S.next(function(next){
   F.p();
   F.p("Later, our application will be able to trade that authorization code for an");
   F.p(F.ub("access token")+" that will act as our application's credential when accessing");
-  F.p("Intellinote for that user. (That step is described in more detail below.)");
+  F.p("Team-One for that user. (That step is described in more detail below.)");
   F.p();
   F.p("Typically this is a one-time action. Once the user has granted access, our");
   F.p("application will be able to obtain new access tokens without direct action ");
@@ -82,7 +82,7 @@ S.next(function(next){
   F.p();
   F.p("For the purpose of this demonstration, we will pretend to be the end-user's ");
   F.p("web browser and complete this step programmatically, but in practice we ");
-  F.p("won't have to worry about this step. We'll just send the user to Intellinote");
+  F.p("won't have to worry about this step. We'll just send the user to Team-One");
   F.p("and wait for him to come back with an authorization code.");
   F.p();
   next();
@@ -156,22 +156,22 @@ S.next(function(next){
   F.p("authorized our application to access his or her account, we can exchange it");
   F.p("for an " +F.ub("access token")+" that we'll include in our actual API calls.");
   F.p();
-  F.p("To get the access token, we submit a POST request to Intellinote, including:");
+  F.p("To get the access token, we submit a POST request to Team-One, including:");
   F.p("  - the "+F.ub("authorization code"));
-  F.p("  - our "+F.ub("client id") + " (as assigned by Intellinote)");
-  F.p("  - our "+F.ub("client secret") + " (as assigned by Intellinote)");
+  F.p("  - our "+F.ub("client id") + " (as assigned by Team-One)");
+  F.p("  - our "+F.ub("client secret") + " (as assigned by Team-One)");
   F.p("  - the value "+F.ub("grant_type=authorization_code"));
   F.p("in a JSON document within the request body.");
   F.p();
-  F.p("If all goes well, Intellinote will respond with a JSON document that contains");
+  F.p("If all goes well, Team-One will respond with a JSON document that contains");
   F.p("our access token.");
   F.p();
   F.p("An access token acts as a type of credential. When we include it within the");
-  F.p("HTTP request header named \"Authorization\", Intellinote will allow our");
+  F.p("HTTP request header named \"Authorization\", Team-One will allow our");
   F.p("application to execute an API method on behalf of the user.");
   F.p();
   F.p("An access token is a "+F.u("temporary")+" credential. It will eventually become \"stale\".");
-  F.p("When that happens, Intellinote will start to return an HTTP 401 (Unauthorized)");
+  F.p("When that happens, Team-One will start to return an HTTP 401 (Unauthorized)");
   F.p("response to our API calls. When this happens we can request a new access token");
   F.p("using a "+F.ub("refresh token")+" that will also be returned by this call.");
   F.p()
@@ -228,7 +228,7 @@ S.next(function(next){
   F.p();
   F.p("    Authorization: Bearer <ACCESS TOKEN VALUE>");
   F.p();
-  F.p("Intellinote will use this value to determine:");
+  F.p("Team-one will use this value to determine:");
   F.p("  - which application is making the call, and");
   F.p("  - which user's data the application is trying to access.");
   F.p()
@@ -272,17 +272,17 @@ S.next(function(next){
   F.p("The refresh call is very similar to the call that used the authorization code");
   F.p("to obtain the initial access and refresh tokens.");
   F.p();
-  F.p("To refresh the access token, we submit a POST request to Intellinote, including:");
+  F.p("To refresh the access token, we submit a POST request to Team-One, including:");
   F.p("  - the "+F.ub("refresh token"));
-  F.p("  - our "+F.ub("client id") + " (as assigned by Intellinote)");
-  F.p("  - our "+F.ub("client secret") + " (as assigned by Intellinote)");
+  F.p("  - our "+F.ub("client id") + " (as assigned by Team-One)");
+  F.p("  - our "+F.ub("client secret") + " (as assigned by Team-One)");
   F.p("  - the value "+F.ub("grant_type=refresh_token"));
   F.p("in a JSON document within the request body.");
   F.p();
-  F.p("If all goes well, Intellinote will respond with a JSON document that contains");
+  F.p("If all goes well, Team-One will respond with a JSON document that contains");
   F.p("our new access token.");
   F.p();
-  F.p("Intellinote may also return a new refresh token value. If it does, we should");
+  F.p("Team-One may also return a new refresh token value. If it does, we should");
   F.p("use this new refresh token the next time we want to refresh the access token.");
   F.p()
   next();

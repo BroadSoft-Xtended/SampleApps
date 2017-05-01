@@ -37,7 +37,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 /** Contains the `main` method, which runs when this class is invoked from the command-line. */
 public class OEMSSOExample {
-  
+
   public static void main(String[] args) throws ClientProtocolException, IOException {
     String[] pair = RESTClient.execute();
     String email = pair[0];
@@ -49,8 +49,8 @@ public class OEMSSOExample {
 
 }
 
-/** 
- * A utility class that encapsulates the logic needed to interact with the 
+/**
+ * A utility class that encapsulates the logic needed to interact with the
  * Intellionte REST API.
  */
 class RESTClient {
@@ -71,13 +71,13 @@ class RESTClient {
 
   /**
    * Performs the following actions:
-   * 
+   *
    *  1. Performs application-level authentication.
-   *  2. Uses those authentication credentials to create two new Intellinote users.
+   *  2. Uses those authentication credentials to create two new Team-One users.
    *  3. Peforms user-level authentication (to act as one of those users).
-   *  4. Acting as that user, creates a new Intellinote Organization and Workspace.
+   *  4. Acting as that user, creates a new Team-One Organization and Workspace.
    *  5. Still acting as that user, invites the second user to that Organization and Workspace.
-   * 
+   *
    * Returns the email address (username) of the second user and the ID of the workspace the
    * user was added to (for use in constructing an SSO URL).
    */
@@ -131,10 +131,10 @@ class RESTClient {
     return accessToken;
   }
 
-  /** 
-   * Uses the REST API to create a new Intellinote user. 
+  /**
+   * Uses the REST API to create a new Team-one user. 
    * Returns the user ID (email address) and an OAuth2 refresh token that can be used
-   * to access the Intellinote REST API on behalf of that user.
+   * to access the Team-one REST API on behalf of that user.
    */
   public static String[] createUser(String email, String fname, String lname, String passwd, String accessToken) throws ClientProtocolException, IOException {
     /*********************************************************************************/
@@ -179,7 +179,7 @@ class RESTClient {
     return result;
   }
 
-  /** 
+  /**
    * Exchanges an OAuth2 refresh token for an access token.
    */
   public static String getAccessTokenForRefreshToken(String refreshToken) throws ClientProtocolException, IOException {
@@ -215,7 +215,7 @@ class RESTClient {
     return accessToken;
   }
 
-  /** Uses the REST API to create a new Intellinote organization. */
+  /** Uses the REST API to create a new Team-One organization. */
   public static String createOrg(String name, String accessToken) throws ClientProtocolException, IOException {
     /*********************************************************************************/
     System.out.println("Creating org " + name + ".");
@@ -247,7 +247,7 @@ class RESTClient {
     return orgId;
   }
 
-  /** Uses the REST API to create a new Intellinote workspace in the specified org. */
+  /** Uses the REST API to create a new Team-One workspace in the specified org. */
   public static String createWorkspace(String name, String orgId, String accessToken) throws ClientProtocolException, IOException {
     /*********************************************************************************/
     System.out.println("Creating workspace " + name + " in org " + orgId + ".");
@@ -329,8 +329,8 @@ class RESTClient {
     /*********************************************************************************/
   }
 
-  /** 
-   * Utility method that wraps an HttpClient to support 
+  /**
+   * Utility method that wraps an HttpClient to support
    * SSL-certificate authorities not included with Java
    * by default.
    */

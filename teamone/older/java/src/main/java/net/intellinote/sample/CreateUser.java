@@ -77,11 +77,11 @@ public class CreateUser {
 	    	 * passing the following parameters in a JSON document in the
 	    	 * request body:
 	    	 *
-	    	 *   - our client_id (as assigned by Intellinote)
-	    	 *   - our client_secret (as assigned by Intellinote)
+	    	 *   - our client_id (as assigned by Team-One)
+	    	 *   - our client_secret (as assigned by Team-One)
 	    	 *   - the value `"grant_type": "client_credentials"
 	    	 *
-	    	 * If all goes well, Intellinote will respond with a JSON document
+	    	 * If all goes well, Team-One will respond with a JSON document
 	    	 * containing an `access_token` and a `refresh_token`.
 	    	 */
 		    // Create the payload with Gson
@@ -146,7 +146,7 @@ public class CreateUser {
 		     *  - the `user_id` assigned to this new user
 		     *
 		     *  - a `refresh_token` that allows us to interact with
-		     *    Intellinote on behalf of that user.
+		     *    Team-One on behalf of that user.
 		     */
 		    String userId = null;
 		    String userRefreshToken = null;

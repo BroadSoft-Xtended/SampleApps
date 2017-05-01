@@ -1,10 +1,10 @@
 /*
  * create-user.js - demonstrates how use `client_credentials` grant and
- *                  `create-user` scope to create new Intellinote user.
+ *                  `create-user` scope to create new Team-One user.
  *
- * Some Intellinote API methods can be invoked outside of a "user context".
+ * Some Team-One API methods can be invoked outside of a "user context".
  *
- * If our application has been authorized (by Intellinote) to do so, we can
+ * If our application has been authorized (by Team-One) to do so, we can
  * peform a type of "user-less" OAuth2 authentication known as a
  * "client_credentials" grant.
  *
@@ -16,19 +16,19 @@
  * This script demonstrates:
  *
  *  - how to perform a client_credentials-based authentication to
- *    to achieve application-level access to Intellinote.
+ *    to achieve application-level access to Team-One.
  *
  *  - how to use that application-level access to create
- *    a new Intellinote user.
+ *    a new Team-One user.
  *
  *  - how to use the automatic new-user-authorization grant
  *    to obtain an access token that allows our application
- *    to interact with Intellinote on the newly created
+ *    to interact with Team-One on the newly created
  *    user's behalf.
  *
  * NOTE: In order for this script to work properly, our application's
  *       API client record must have certain "rights" within the
- *       Intellinote system.  Specifically:
+ *       Team-One system.  Specifically:
  *
  *        - Our application must be allowed to perform "user-less"
  *          authentication.
@@ -40,7 +40,7 @@
  *          access to the `create-org` scope.
  *
  *       (If you need this level of access but do not currently
- *       have it, contact Intellinote for support.)
+ *       have it, contact Team-One for support.)
  */
 
 // IMPORTS
@@ -81,11 +81,11 @@ var S = new Sequencer();
  * passing the following parameters in a JSON document in the
  * request body:
  *
- *   - our client_id (as assigned by Intellinote)
- *   - our client_secret (as assigned by Intellinote)
+ *   - our client_id (as assigned by Team-One)
+ *   - our client_secret (as assigned by Team-One)
  *   - the value `"grant_type": "client_credentials"
  *
- * If all goes well, Intellinote will respond with a JSON document
+ * If all goes well, Team-One will respond with a JSON document
  * containing an `access_token` and a `refresh_token`.
  */
 var refreshToken = null;
@@ -146,7 +146,7 @@ var email = Date.now() + "-" + Math.round(Math.random()*10000) + "@example.org";
  *  - the `user_id` assigned to this new user
  *
  *  - a `refresh_token` that allows us to interact with
- *    Intellinote on behalf of that user.
+ *    Team-One on behalf of that user.
  */
 var userId = null;
 var userRefreshToken = null;

@@ -127,7 +127,7 @@ List notes in that workspace.
                   {
                     "note_id": 2500,
                     "note_type": "NOTE",
-                    "title": "Welcome to your first note in Intellinote!",
+                    "title": "Welcome to your first note in Team-One!",
                     "viewed": false,
                     "state": "ACTIVE",
                     "creator": {

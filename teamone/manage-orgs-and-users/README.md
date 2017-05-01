@@ -1,6 +1,6 @@
 # Managing Organizations and Users
 
-This directory contains a simple JavaScript program that demonstrates how to create and manage users and organizations via the Team-One (Intellinote) API.
+This directory contains a simple JavaScript program that demonstrates how to create and manage users and organizations via the Team-One API.
 
 ## Installing
 
@@ -16,4 +16,4 @@ This directory contains a simple JavaScript program that demonstrates how to cre
 
 1. Copy `config.json.template` to `config.json`.
 2. Edit `config.json` to enter your `client_id` and `client_secret` values.
-3. Run `npm run it`. Note that this will connect to the Intellinote production server and create an organization and several user accounts.
+3. Run `npm run it`. Note that this will connect to the Team-One production server and create an organization and several user accounts.
