@@ -8,6 +8,7 @@ var fs = require('fs');
 var cors = require('cors');
 var express = require('express');
 var app = express();
+var rp = require('request-promise');
 
 //You will need to enable cors in order to receive request from our servers
 app.use(cors({
@@ -73,10 +74,30 @@ router.post('/:appName/timeline', function(req, res) {
   return res.json(timeline);
 });
 
-router.get('/helloWorldAdvanced/authenticate', function(req, res) {
+router.get('/:appName/authenticate', function(req, res) {
   console.log('You called the auth route entry point', req.body);
   console.log('You called the auth route entry point', req.params);
-  res.send(200, {});
+  res.writeHead(301, {Location: '/signin'});
+  res.end();
+});
+
+router.post('/signin', function(req, res) {
+  console.log('signin params', req.body);
+
+  var options = {
+    method: 'POST',
+    uri: 'https://core.broadsoftlabs.com/HackathonPrivate/jodonnell@broadsoft.com/auth',
+    body: {
+        auth: {username: 'jodonnell@broadsoft.com'}
+    },
+    json: true
+  };
+
+  rp(options).then(function() {
+    //submits the promise
+  }).catch(function(error) {
+    console.log('Could not post to hub');
+  })
 });
 
 // REGISTER OUR ROUTES -------------------------------

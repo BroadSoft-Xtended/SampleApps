@@ -22,7 +22,9 @@
     "body-parser": "^1.15.2",
     "cors": "^2.8.1",
     "express": "^4.14.0",
-    "fs": "0.0.1-security"
+    "fs": "0.0.1-security",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.0"
   },
   "devDependencies": {
     "nodemon": "^1.11.0"

@@ -52,12 +52,13 @@ router.get('/test', function(req, res) {
 });
 
 // This is where you set the notifications number to be shown
+// NOTE: we have :appName here that Hub will use to call your app with your app name
 router.post('/:appName/notifications', function(req, res) {
   console.log('We are requesting the notifications count');
   res.send(200, {count: 99});
 });
 
-
+// This is how you set contextual
 router.post('/:appName/timeline', function(req, res) {
   console.log('We are requesting the contextual data', req.body);
   var emails = req.body.context.emails;
