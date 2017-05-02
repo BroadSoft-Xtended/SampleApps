@@ -41,8 +41,7 @@ router.options('/*', function(req, res) {
 });
 
 // ROUTES FOR OUR API
-// all routes are prefixed automatically with /v1
-// They currently also need /youAppName in them. This must match exactly the name you added in the developer portal sandbox
+// They currently also need /youAppName in them. We use :appName in the routes so that you can call your app anything you want in the dev portal
 // =============================================================================
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/test)
@@ -52,13 +51,13 @@ router.get('/test', function(req, res) {
 });
 
 // This is where you set the notifications number to be shown
-router.post('/helloWorld/notifications', function(req, res) {
+router.post('/:appName/notifications', function(req, res) {
   console.log('We are requesting the notifications count');
   res.send(200, {count: 99});
 });
 
 
-router.post('/helloWorld/timeline', function(req, res) {
+router.post('/:appName/timeline', function(req, res) {
   console.log('We are requesting the contextual data', req.body);
   var emails = req.body.context.emails;
 
@@ -80,11 +79,9 @@ router.get('/helloWorldAdvanced/authenticate', function(req, res) {
   res.send(200, {});
 });
 
-
-
 // REGISTER OUR ROUTES -------------------------------
 // all of our routes will be prefixed with /v1 and we need to actually use the routes we made (app.use)
-app.use('/v1', router);
+app.use(router);
 
 // START THE SERVER
 // =============================================================================
