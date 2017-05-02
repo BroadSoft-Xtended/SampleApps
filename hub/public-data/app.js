@@ -52,18 +52,19 @@ router.get('/test', function(req, res) {
 });
 
 // This is where you set the notifications number to be shown
-router.post('/helloWorld/notifications', function(req, res) {
+router.post('/:appName/notifications', function(req, res) {
   console.log('We are requesting the notifications count');
   res.send(200, {count: 99});
 });
 
 
-router.post('/helloWorld/timeline', function(req, res) {
+router.post('/:appName/timeline', function(req, res) {
   console.log('We are requesting the contextual data', req.body);
   var emails = req.body.context.emails;
 
   var timeline = {
     items: [{
+      id: 'sdfsdfsdfsdfsd',
       date: new Date(),
       title: 'My test record',
       description: 'My description: user emails you are talking to:' + emails,
@@ -71,13 +72,15 @@ router.post('/helloWorld/timeline', function(req, res) {
     }]
   };
 
-  return res.json(timeline);
+  console.log('sending timeline:', timeline);
+
+  return res.send(200, timeline);
 });
 
 
 // REGISTER OUR ROUTES -------------------------------
 // all of our routes will be prefixed with /v1 and we need to actually use the routes we made (app.use)
-app.use('/v1', router);
+app.use(router);
 
 // START THE SERVER
 // =============================================================================
