@@ -106,6 +106,7 @@ router.get('/:appName/authenticate', function(req, res) {
   console.log('/authenticate', req.query);
 
   // I set the token on the session for the user so I can use it in other routes
+  req.session.appName = req.params.appName;
   req.session.hubLoginToken = req.query.hubLoginToken;
 
   // This is needed so the redirect does not get cached. If it is cached, it wont update on chages
@@ -124,7 +125,7 @@ router.post('/signupUser', function(req, res) {
   // Now you have to send a post to hub with your auth token. This will get sent back to you on requests from hub.
   var options = {
     method: 'POST',
-    uri: 'https://core.broadsoftlabs.com/v1/HackathonPrivate/jodonnell@broadsoft.com/auth',
+    uri: 'https://core.broadsoftlabs.com/v1/' + req.session.appName + '/jodonnell@broadsoft.com/auth',
     body: {
       hubLoginToken: req.session.hubLoginToken,
       auth: 'jodonnell@broadsoft.com'
