@@ -1,0 +1,2 @@
+#!/bin/bash
+`dirname $0`/.via-forever "lib/coin-flip/coin-flip-bot.coffee" $1

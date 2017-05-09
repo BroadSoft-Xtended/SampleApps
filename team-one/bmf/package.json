@@ -1,0 +1,24 @@
+{
+  "name": "team-one-bmf",
+  "version": "1.1.2",
+  "published": "30 April 2017 (2133)",
+  "description": "Team-One Bot Management Framework",
+  "repository": "BroadSoft-Xtended/SampleApps",
+  "license": "MIT",
+  "author": "BroadSoft",
+  "dependencies": {
+    "forever"               : "^0.15",
+    "inote-util"            : "^1.8.2",
+    "ws"                    : "^1.1.1",
+    "coffee-script"         : "^1"
+  },
+  "devDependencies": {
+    "wscat"                 : "^1"
+  },
+  "engines": { "node": "^6" },
+  "main": "lib/base-bot.js",
+  "scripts": {
+    "postinstall" : "./node_modules/.bin/coffee -c lib/*.coffee lib/*/*.coffee"
+  }
+
+}

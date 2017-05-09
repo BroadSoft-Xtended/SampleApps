@@ -1,0 +1,43 @@
+{
+  /* GENERIC CONFIGURATION */
+  "rtm": {
+    "start": { /* Describes the REST call used to initiate RTM session. */
+      "protocol":"https",
+      "host":"app.intellinote.net",
+      "port":443,
+      "path":"/rest/v2/rtms/start"
+    },
+    "ping": { /* controls how often the bots send a ping/keep-alive signal */
+      "wait-time-millis": 30000 /* set to 0 or false to disable entirely */
+    },
+    "presence": { /* controls how often the bots update their presence status */
+      "wait-time-millis": 720000, /* set to 0 or false to disable entirely */
+      "status": "ONLINE",
+      "path": "/user/-/presence"
+    }
+  },
+
+  /*
+   * BOT-SPECIFIC CONFIGURATION
+   *
+   *  - `api-key` and `team-one-api-key` are Team-One API keys.
+   *     Get one at https://app.intellinote.net/rest/account/api-tokens
+   *
+   *  - `cleverbot-api-key` is a key to the public Cleverbot API.
+   *     Get one at https://www.cleverbot.com/api/.
+  */
+  "eliza": { /* Configuration used by `lib/eliza`. */
+    "api-key": "CHANGE-ME"
+  },
+  "coin-flip": { /* Configuration used by `lib/coin-flip` */
+    "api-key": "CHANGE-ME"
+  },
+  "cleverbot": { /* Configuration used by `lib/cleverbot` */
+    "team-one-api-key": "CHANGE-ME",
+    "cleverbot-api-key": "CHANGE-ME"
+  },
+  "gmapsbot": { /* Configuration used by `lib/gmapsbot` */
+    "api-key": "CHANGE-ME"
+  }
+
+}
