@@ -52,6 +52,7 @@ module: js bin
 	cp $(README_MD) $(MODULE_DIR)
 	cp -r bin $(MODULE_DIR)
 	cp -r lib $(MODULE_DIR)
+	rm -rf $(MODULE_DIR)/lib/loud-bot
 	mv $(MODULE_DIR) $(PACKAGE_DIR)
 	tar -czf $(PACKAGE_DIR).tgz $(PACKAGE_DIR)
 test-module-install: clean-test-module-install module
