@@ -95,8 +95,6 @@ class Gmapsbot extends BaseBot
   # post given response_text to Team-One.
   # where approriate @screen_name is prefixed to messages
   post_chat_to_team_one:(payload, response_text)->
-    if payload.screen_name?  and not payload.workspace_1on1
-      response_text = "@#{payload.screen_name}  #{response_text}"
     @reply payload, response_text
 
   print_help:()=>

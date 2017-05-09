@@ -11,6 +11,7 @@ class CleverbotBot extends BaseBot
 
   constructor:(@team_one_api_key, @cleverbot_api_key)->
     super(name:"Cleverbot")
+    @config.fetch_screen_name = true
     @cleverbot_state_by_uname = {} # holds the cb conversation state by user
     @ignore_count = 0 # number of messages to ignore
     config                    = require('inote-util').config.init()
@@ -31,35 +32,11 @@ class CleverbotBot extends BaseBot
     @cleverbot_path           = "/getreply?key=#{@cleverbot_api_key}&input="
     if @cleverbot_protocol is "http"
       https = require "http"
-    @on "rtm/hello", @_fetch_screen_name_on_hello
-    @on "rtm/rest/response", @_parse_screen_name_from_response
 
   # launch the bot, requesting messages from one-on-one workspaces
   # or that @mention me directly
   launch_bot:(api_key = @api_key)=>
-    super api_key, "at_me=true"
-
-  _fetch_screen_name_on_hello:()=>
-    @user_profile_request_id = "get-user-profile-#{Date.now()}"
-    payload = {
-      type: "rest/request"
-      method: "GET"
-      path: "/user/-"
-      id: @user_profile_request_id
-    }
-    try
-      @send_payload payload
-    catch err
-      @error "Error while requesting user-profile:", payload, err
-
-  _parse_screen_name_from_response:(payload)=>
-    unless @user_profile_request_id?
-      return
-    else if payload?.reply_to is @user_profile_request_id
-      if payload.body?.screen_name?
-        @my_screen_name = payload.body.screen_name
-        @my_screen_name_re = new RegExp("@#{@my_screen_name} ?","g")
-      @user_profile_request_id = null
+    super api_key, ["at_me=true" ]
 
   # Handle a chat message delivered by the RTM API.
   # When relevant, submits message text to Cleverbot server,
@@ -108,8 +85,7 @@ class CleverbotBot extends BaseBot
   # callback signature: (err, cleverbot_response)
   submit_to_cleverbot:(text, cs, callback)=>
     # strip the @cleverbot text because it is gibberish to the actual cleverbot
-    if @my_screen_name_re?
-      text = text.replace(@my_screen_name_re," ")
+    text = @replace_my_screen_name(text)
     # prepare the cleverbot REST API call
     request_options  = {
       method: "GET"
@@ -141,8 +117,6 @@ class CleverbotBot extends BaseBot
   # where approriate @screen_name is prefixed to messages
   # TODO: extract the @screen_name logic into BaseBot (but make it optional)
   post_chat_to_team_one:(payload, response_text)->
-    if payload.screen_name? and not payload.workspace_1on1
-      response_text = "@#{payload.screen_name} #{response_text}"
     @reply payload, response_text
 
   print_help:()=>

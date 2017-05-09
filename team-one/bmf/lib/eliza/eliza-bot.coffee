@@ -43,8 +43,6 @@ class ElizaBot extends BaseBot
           session = new Eliza()
           @sessions[payload.user] = session
         response_text = session.transform(payload.text)
-      if payload.screen_name? and not payload.workspace_1on1
-        response_text = "@#{payload.screen_name} #{response_text}"
       if session.quit
         response_text += "\n" + session.getFinal()
         delete sessions[payload.user]

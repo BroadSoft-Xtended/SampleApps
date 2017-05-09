@@ -154,6 +154,8 @@ class BaseBot extends EventEmitter
   # Invoked (via `@on_ws_message`) when the `hello` payload is delivered.
   on_rtm_hello:(json,flags)=>
     @log @CG "RTM session started."
+    if @config.fetch_screen_name
+      @_fetch_screen_name_on_hello()
     if @config.ping_wait_millis
       @send_ping()
     if @config.presence_wait_millis
@@ -199,10 +201,23 @@ class BaseBot extends EventEmitter
       catch err
         @error "while posting presence:", payload, err
 
-  # send a chat message containing `message` to a workspace or chat
-  # the `reply_to` parameter should contain the original payload we are
-  # responding to, which will be used to determine where to post this response.
-  reply:(reply_to, message)=>
+  # send a chat message containing `message` to a workspace or chat.
+  #  - `reply_to` - the original payload we are responding to
+  #  - `message`  - the text of the message to send
+  #  - `options`  - an optional map of options.
+  #                 recognized options include:
+  #                   - `@mention` - auto (default), true, false (also recognized as `at_mention`)
+  reply:(reply_to, message, options)=>
+    reply_to ?= {}
+    options ?= {}
+    message ?= ""
+    if reply_to.screen_name?
+      if Util.truthy_string( options["@mention"] ? options["at_mention"] )
+        message = "@#{reply_to.screen_name} #{message}"
+      else if Util.falsey_string( options["@mention"] ? options["at_mention"] )
+        message = message
+      else unless reply_to.workspace_1on1
+        message = "@#{reply_to.screen_name} #{message}"
     payload = {
       type         : "message"
       org_id       : reply_to.org_id
@@ -219,6 +234,34 @@ class BaseBot extends EventEmitter
     log(@CB("Sending RTM payload via websocket:"), payload)
     @ws.send payload
 
+  replace_my_screen_name:(text, replace_with)=>
+    replace_with ?= " "
+    if text? and @my_screen_name_re?
+      text = text.replace(@my_screen_name_re, replace_with)
+    return text
+
+  _fetch_screen_name_on_hello:()=>
+    @user_profile_request_id = "get-user-profile-#{Date.now()}"
+    payload = {
+      type: "rest/request"
+      method: "GET"
+      path: "/user/-"
+      id: @user_profile_request_id
+    }
+    try
+      @send_payload payload
+    catch err
+      @error "Error while requesting user-profile:", payload, err
+
+  _parse_screen_name_from_response:(payload)=>
+    unless @user_profile_request_id?
+      return
+    else if payload?.reply_to is @user_profile_request_id
+      if payload.body?.screen_name?
+        @my_screen_name = payload.body.screen_name
+        @my_screen_name_re = new RegExp("@#{@my_screen_name} ?","g")
+      @user_profile_request_id = null
+
   # posts a `ping` payload to the websocket
   send_ping:()=>
     @send_payload {
@@ -226,7 +269,6 @@ class BaseBot extends EventEmitter
       sent: Date.now()
       type:"ping"
     }
-
   # log the given message unless QUIET is set
   log:(message...)=>
     unless @config.quiet
@@ -351,6 +393,7 @@ class BaseBot extends EventEmitter
     c.presence_path          = config.get("rtm:presence:path") ? "/user/-/presence"
     if c.presence_wait_millis
       c.presence_wait_millis = c.presence_wait_millis - (30*1000) + (Math.random()*60*1000) # fuzz +/- 30 seconds
+    c.fetch_screen_name      = Util.truthy_string(config.get("rtm:fetch-screen-name") ? config.get("rtm:fetch_screen_name") ? config.get("fetch-screen-name") ? config.get("fetch_screen_name") ? false)
     #-------------------------------------------------------------------------------
     # Configure log level. Note that `QUIET` is laconic but not totally silent.
     #-------------------------------------------------------------------------------
