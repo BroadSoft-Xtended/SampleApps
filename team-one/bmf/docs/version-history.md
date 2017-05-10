@@ -1,3 +1,8 @@
+## Version 1.3.1 - May 9, 2017
+
+ * `replace_my_screen_name` method now exposes third parameter `replace_globally`, defaulting to true.
+ * expose `fetch_screen_name` method
+
 ## Version 1.3.0 - May 9, 2017
 
  * New `fetch-screen-name` config parameter to automate introspection of bot's screen name on `hello`.

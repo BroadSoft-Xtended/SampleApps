@@ -23,6 +23,7 @@ class ElizaBot extends BaseBot
     super(name:"Eliza")
     @sessions = {} # holds Eliza instance for each user
     config   = require('inote-util').config.init()
+    @config.fetch_screen_name = true
     @api_key ?= config.get("eliza:team-one-api-key")  \
               ? config.get("eliza:api-key")            \
               ? config.get("team-one-api-key")         \
@@ -42,7 +43,10 @@ class ElizaBot extends BaseBot
         unless session?
           session = new Eliza()
           @sessions[payload.user] = session
-        response_text = session.transform(payload.text)
+        # strip the @cleverbot text because it is gibberish to the actual cleverbot
+        text = @replace_my_screen_name(payload.text,"",false) # replace the first instance of @elizabot with nothing
+        text = @replace_my_screen_name(text,"Eliza") # replace all other instances with `Eliza`.
+        response_text = session.transform(text)
       if session.quit
         response_text += "\n" + session.getFinal()
         delete sessions[payload.user]

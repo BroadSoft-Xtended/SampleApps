@@ -85,7 +85,8 @@ class CleverbotBot extends BaseBot
   # callback signature: (err, cleverbot_response)
   submit_to_cleverbot:(text, cs, callback)=>
     # strip the @cleverbot text because it is gibberish to the actual cleverbot
-    text = @replace_my_screen_name(text)
+    text = @replace_my_screen_name(text,"",false) # replace the first instance of @cleverbot with nothing
+    text = @replace_my_screen_name(text,"Cleverbot") # replace all other instances with `Cleverbot`.
     # prepare the cleverbot REST API call
     request_options  = {
       method: "GET"
