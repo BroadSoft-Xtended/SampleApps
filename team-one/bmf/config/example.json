@@ -8,7 +8,7 @@
       "path":"/rest/v2/rtms/start"
     },
     "ping": { /* controls how often the bots send a ping/keep-alive signal */
-      "wait-time-millis": 30000 /* set to 0 or false to disable entirely */
+      "wait-time-millis": 60000 /* set to 0 or false to disable entirely */
     },
     "presence": { /* controls how often the bots update their presence status */
       "wait-time-millis": 720000, /* set to 0 or false to disable entirely */
