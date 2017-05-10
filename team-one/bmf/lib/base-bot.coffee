@@ -155,6 +155,7 @@ class BaseBot extends EventEmitter
   on_rtm_hello:(json,flags)=>
     @log @CG "RTM session started."
     if @config.fetch_screen_name
+      @on "rtm/rest/response", @_parse_screen_name_from_response
       @fetch_screen_name()
     if @config.ping_wait_millis
       @send_ping()
