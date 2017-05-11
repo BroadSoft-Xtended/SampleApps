@@ -5,6 +5,7 @@ LogUtil                = require('inote-util').LogUtil
 Util                   = require('inote-util').Util
 WebSocket              = require 'ws'
 EventEmitter           = require 'events'
+IntellinoteClient      = require("intellinote-client").IntellinoteClient
 https                  = require 'https'
 #-------------------------------------------------------------------------------
 
@@ -40,6 +41,25 @@ class BaseBot extends EventEmitter
     if @config.start_protocol is "http"
       https = require 'http'
 
+  # The REST client (`rest_client`) is automatically initialized in `launch_bot`,
+  # but you can use this method to exert more control over the initialization
+  # or to init and use the REST client before `launch_bot` is called.
+  init_rest_client:(api_key,base_url,debug)=>
+    # if a config map is passed as the first parameter rather than an api key,
+    # use that instaed
+    if api_key? and typeof api_key is "object" and (api_key.access_token? or api_key.api_key?) and not base_url? and not debug?
+      config = api_key
+      if config.api_key and not config.access_token
+        config.access_token = config.api_key
+        delete config.api_key
+    else
+      client_config = {
+        access_token: api_key
+        base_url: base_url ? "#{@config.start_protocol}://#{@config.start_host}:#{@config.start_port}/rest/v2"
+        debug: debug ? false
+      }
+      @rest_client = new IntellinoteClient(client_config)
+
   # Connect to the RTM API with the given `api_key` (string) and
   # `filters` (string or array of strings). Once launched the
   # `@on_rtm_message` method will be invoked every time a
@@ -47,6 +67,8 @@ class BaseBot extends EventEmitter
   launch_bot:(api_key, filters)=>
     @log @Cg "Launching bot."
     @debug "Fetching WSS URL."
+    unless @rest_client?
+      @init_rest_client(api_key)
     @get_wss_url api_key, filters, (err, url)=>
       if err?
         @error "while fetching WSS URL:", err
@@ -155,7 +177,6 @@ class BaseBot extends EventEmitter
   on_rtm_hello:(json,flags)=>
     @log @CG "RTM session started."
     if @config.fetch_screen_name
-      @on "rtm/rest/response", @_parse_screen_name_from_response
       @fetch_screen_name()
     if @config.ping_wait_millis
       @send_ping()
@@ -186,6 +207,7 @@ class BaseBot extends EventEmitter
     process.exit 0
 
   # Updates my presence status by invoking a REST method thru the web socket.
+  # TODO consider doing this via @rest_client instead?
   put_presence:()=>
     if @ws?
       payload = {
@@ -252,46 +274,85 @@ class BaseBot extends EventEmitter
         text = text.replace(@my_screen_name_re, replace_with)
     return text
 
-  # Use the (tunneled) REST API to fetch the user profile for this
-  # bot, and populate `@my_screen_name` (and related) attribute once
-  # the response is recieved.
+  # Use the (non-tunnelled) REST client to fetch the specified
+  # user's profile.
+  #  - `id`  - optional identifier for the user to fetch, which can be user_id,
+  #            email address or the string `-`, indicating that the profile of
+  #            the _current_ (bot) user should be fetched; defualts to `-`.
+  #  - `callback` - callback method with the signature `(err, json)`
+  #                 (where `json` contains the user info).
   #
-  # The optional `callback` is invoked when the `rest/response` payload
-  # is returned and `@my_screen_name` is set.  The callback method's
-  # signature is just `callback(err)`.
-  #
-  # Note that only one fetch-screen-name callback can be valid at one time.
-  # If `fetch_screen_name` is called a second time before the first request
-  # receives a callback (if any) the behavior is undefined. (Although as a
-  # matter of practice the current behavior will be to forget about the first
-  # request/callback and try again.)
-  fetch_screen_name:(callback)=>
-    payload = {
-      type: "rest/request"
-      method: "GET"
-      path: "/user/-"
-      id: "get-user-profile-#{Date.now()}-#{Math.round(Math.random()*1000)}"
-    }
-    try
-      @send_payload payload
-      @fetch_screen_name_request_id = payload.id
-      @fetch_screen_name_callback = callback
-    catch err
-      @error "Error while requesting user-profile for fetch_screen_name:", payload, err
+  get_user:(id,callback)=>
+    if typeof id is 'function' and not callback?
+      callback = id
+      id = null
+    id ?= "-"
+    if callback? # don't bother to make the call if the caller is not going to accept the data
+      @debug "Using REST client to call GET /user/#{id}"
+      @rest_client.get_user "-", (err, json, response, body)=>
+        @debug "REST client to call to GET /user/#{id} yielded",err, response?.statusCode, JSON.stringify(json)
+        if err?
+          @error "Error during rest_client.get_user", err
+        callback(err, json, response, body)
+    else
+      @error "WARNING: get_user call ignored because no callback method was provided."
 
-  # rmt/response event listener that handles responses to `fetch_screen_name`.
-  _parse_screen_name_from_response:(payload)=>
-    unless @fetch_screen_name_request_id?
-      return
-    else if payload?.reply_to is @fetch_screen_name_request_id
-      if payload.body?.screen_name?
-        @my_screen_name = payload.body.screen_name
+  fetch_screen_name:(callback)=>
+    @get_user "-", (err, json, response, body)=>
+      if err?
+        if callback?
+          callback err
+        else
+          @error "WARNING: get_user yielded an error in fetch_screen_name but no callback was provided.", err
+      else unless json?.screen_name?
+        @error "WARNING: fetch_screen_name failed to return an object with a 'screen_name' attribute."
+        callback? null, null
+      else
+        @my_screen_name = json.screen_name
         @my_screen_name_re   = new RegExp("@#{@my_screen_name} ?")
         @my_screen_name_re_g = new RegExp("@#{@my_screen_name} ?","g")
-      @fetch_screen_name_request_id = null
-      callback = @fetch_screen_name_callback
-      @fetch_screen_name_callback = null
-      callback?()
+        callback? null, @my_screen_name
+
+  # # Use the (tunneled) REST API to fetch the user profile for this
+  # # bot, and populate `@my_screen_name` (and related) attribute once
+  # # the response is recieved.
+  # #
+  # # The optional `callback` is invoked when the `rest/response` payload
+  # # is returned and `@my_screen_name` is set.  The callback method's
+  # # signature is just `callback(err)`.
+  # #
+  # # Note that only one fetch-screen-name callback can be valid at one time.
+  # # If `fetch_screen_name` is called a second time before the first request
+  # # receives a callback (if any) the behavior is undefined. (Although as a
+  # # matter of practice the current behavior will be to forget about the first
+  # # request/callback and try again.)
+  # fetch_screen_name:(callback)=>
+  #   payload = {
+  #     type: "rest/request"
+  #     method: "GET"
+  #     path: "/user/-"
+  #     id: "get-user-profile-#{Date.now()}-#{Math.round(Math.random()*1000)}"
+  #   }
+  #   try
+  #     @send_payload payload
+  #     @fetch_screen_name_request_id = payload.id
+  #     @fetch_screen_name_callback = callback
+  #   catch err
+  #     @error "Error while requesting user-profile for fetch_screen_name:", payload, err
+  #
+  # # rmt/response event listener that handles responses to `fetch_screen_name`.
+  # _parse_screen_name_from_response:(payload)=>
+  #   unless @fetch_screen_name_request_id?
+  #     return
+  #   else if payload?.reply_to is @fetch_screen_name_request_id
+  #     if payload.body?.screen_name?
+  #       @my_screen_name = payload.body.screen_name
+  #       @my_screen_name_re   = new RegExp("@#{@my_screen_name} ?")
+  #       @my_screen_name_re_g = new RegExp("@#{@my_screen_name} ?","g")
+  #     @fetch_screen_name_request_id = null
+  #     callback = @fetch_screen_name_callback
+  #     @fetch_screen_name_callback = null
+  #     callback?()
 
   # posts a `ping` payload to the websocket
   send_ping:()=>

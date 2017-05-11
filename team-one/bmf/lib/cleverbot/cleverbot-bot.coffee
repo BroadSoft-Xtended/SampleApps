@@ -111,7 +111,7 @@ class CleverbotBot extends BaseBot
           catch e
             callback(e)
     # actually sumbit the cleverbot REST API call
-    @debug "Submitting to cleverbot API:", request_options
+    @debug "Submitting to cleverbot API:", JSON.stringify(request_options)
     https.request(request_options, handler).end()
 
   # post given response_text to Team-One.

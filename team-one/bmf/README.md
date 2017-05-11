@@ -526,6 +526,22 @@ The daemon script supports many other commands.  Run
 
 for more information.
 
+## REST Client (non-tunnelled)
+
+For your convenience, a REST API client is provided to support direct (non-tunnelled) REST API interactions.
+
+The client is instantiated in the `launch_bot` method, and is available as `baseBot.rest_client`.
+
+For example, to fetch the list of users in a given workspace:
+
+```js
+loudBot.rest_client.getWorkspaceMembers(orgId, workspaceId, function(err, json) {
+  console.log("Here is a list of workspace members",json);
+});
+```
+
+See the [Intellinote Client](https://github.com/intellinote/intellinote-client) documentation for details.
+
 ## Licensing
 
 Unless otherwise noted, all code and documentation in this module is made available
