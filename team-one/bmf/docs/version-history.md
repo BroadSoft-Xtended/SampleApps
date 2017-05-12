@@ -1,3 +1,5 @@
+# Team-One BMF Version History
+
 ## Version 1.4.0 - May 11, 2017
 
  * New `rest_client` helper added to `BaseBot`, providing _dozens_ of convenience methods for direct (non-tunnelled) interactions with the Team-One REST API.  See [Team-One Client](https://github.com/intellinote/intellinote-client) for details.
