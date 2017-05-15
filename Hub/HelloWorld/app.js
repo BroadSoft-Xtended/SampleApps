@@ -125,10 +125,10 @@ router.post('/signupUser', function(req, res) {
   // Now you have to send a post to hub with your auth token. This will get sent back to you on requests from hub.
   var options = {
     method: 'POST',
-    uri: 'https://core.broadsoftlabs.com/v1/' + req.session.appName + '/jodonnell@broadsoft.com/auth',
+    uri: 'https://core.broadsoftlabs.com/v1/' + req.session.appName + '/jodonnell@broadsoft.com/auth', // This email is the email that you want to store in Hub so that hub can send you back the hubLoginToken and auth that matches that email.
     body: {
       hubLoginToken: req.session.hubLoginToken,
-      auth: 'jodonnell@broadsoft.com'
+      auth: 'asdf87sdaf798sdf987asd9f' //This is  acustom token that I made up but you will likely want to use some token that only you can validate for the user
     },
     json: true
   };
