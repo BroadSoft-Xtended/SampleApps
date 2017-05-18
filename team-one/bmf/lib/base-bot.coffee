@@ -37,9 +37,50 @@ class BaseBot extends EventEmitter
     @_register_internal_listeners()
     @_maybe_register_sigint_handler(@config)
     @_configure_logging(@config)
+    @ignoring = {}
     @ping_count = 0
     if @config.start_protocol is "http"
       https = require 'http'
+
+  # ignore the specified user within the specified workspace for
+  # duration seconds.
+  ignore:(workspace_id, user_id, duration_in_seconds)=>
+    duration_in_seconds ?= @config.default_ignore_duration_seconds
+    duration = duration_in_seconds*1000
+    key = "#{workspace_id}|#{user_id}"
+    ignore_until = Date.now()+duration
+    @ignoring[key] = ignore_until
+    stop_ignoring = ()=>
+      if @ignoring[key] is ignore_until
+        delete @ignoring[key]
+    setTimeout(stop,duration)
+
+  # stop ignoring the specified user within the specified
+  # workspace, even if the previously defined duration has
+  # not elapsed.
+  stop_ignoring:(workspace_id, user_id)=>
+    key = "#{workspace_id}|#{user_id}"
+    delete @ignoring[key]
+
+  # returns `true` if we should ignore the specified payload,
+  # `false` otherwise.
+  should_ignore:(payload)=>
+    if payload.type in ["message","user_typing"]
+      key = "#{payload.workspace_id}|#{payload.user}"
+    else if payload.type is "note"
+      key = "#{payload.workspace_id}|#{payload.note?.creator?.user_id ? payload.previous_note?.creator?.user_id}"
+    if key?
+      ignore_until = @ignoring[key]
+      if ignore_until?
+        if ignore_until >= Date.now()
+          return true
+        else
+          delete @ignoring[key]
+          return false
+      else
+        return false
+    else
+      return false
 
   # The REST client (`rest_client`) is automatically initialized in `launch_bot`,
   # but you can use this method to exert more control over the initialization
@@ -146,21 +187,38 @@ class BaseBot extends EventEmitter
       # ignored
     (if json?.type is "message" then @log else @debug) @CM("Received via websocket:"),data
     if json?
-      switch json.type
-        when "hello"
-          @emit "rtm/hello", json, flags
-        when "goodbye"
-          @emit "rtm/goodbye", json, flags
-        when "pong"
-          @emit "rtm/pong", json, flags
-        when "message"
-          @emit "rtm/message", json, flags
-        when "rest/response"
-          @emit "rtm/rest/response", json, flags
+      if @should_ignore json
+        @debug "Ignoring:",json
+      else
+        switch json.type
+          when "hello"
+            @emit "rtm/hello", json, flags
+          when "goodbye"
+            @emit "rtm/goodbye", json, flags
+          when "pong"
+            @emit "rtm/pong", json, flags
+          when "message"
+            @emit "rtm/message", json, flags
+          when "user_typing"
+            @emit "rtm/user_typing", json, flags
+          when "note"
+            @emit "rtm/note", json, flags
+          when "rest/response"
+            @emit "rtm/rest/response", json, flags
 
   # Invoked (via `@on_ws_message`) when a `message` payload is delivered.
   # `json` will contain the JSON  payload that was receieved (in object, not string form).
   on_rtm_message:(json,flags)=>
+    undefined
+
+  # Invoked (via `@on_ws_message`) when a `note` payload is delivered.
+  # `json` will contain the JSON  payload that was receieved (in object, not string form).
+  on_rtm_note:(json,flags)=>
+    undefined
+
+  # Invoked (via `@on_ws_message`) when a `user_type` payload is delivered.
+  # `json` will contain the JSON  payload that was receieved (in object, not string form).
+  on_rtm_user_typing:(json,flags)=>
     undefined
 
   # Invoked (via `@on_ws_message`) when a `rest/response` payload is delivered.
@@ -249,6 +307,18 @@ class BaseBot extends EventEmitter
     }
     @send_payload payload
 
+  send_typing:(org_id, workspace_id)=>
+    # allow `org_id` to be a payload-like object
+    if not workspace_id? and org_id?.org_id? and org_id?.workspace_id?
+      workspace_id = org_id.workspace_id
+      org_id = org_id.org_id
+    payload = {
+      type: "typing"
+      org_id: org_id
+      workspace_id: workspace_id
+    }
+    @send_payload(payload)
+
   # publish the given payload object to the web socket (then log it)
   send_payload:(payload)=>
     log = (if payload?.type is "message" then @log else @debug)
@@ -295,7 +365,7 @@ class BaseBot extends EventEmitter
           @error "Error during rest_client.get_user", err
         callback(err, json, response, body)
     else
-      @error "WARNING: get_user call ignored because no callback method was provided."
+      @warn "get_user call ignored because no callback method was provided."
 
   fetch_screen_name:(callback)=>
     @get_user "-", (err, json, response, body)=>
@@ -303,56 +373,16 @@ class BaseBot extends EventEmitter
         if callback?
           callback err
         else
-          @error "WARNING: get_user yielded an error in fetch_screen_name but no callback was provided.", err
+          @warn "get_user yielded an error in fetch_screen_name but no callback was provided.", err
       else unless json?.screen_name?
-        @error "WARNING: fetch_screen_name failed to return an object with a 'screen_name' attribute."
+        @warn "fetch_screen_name failed to return an object with a 'screen_name' attribute."
         callback? null, null
       else
+        @my_user_id = json.user_id
         @my_screen_name = json.screen_name
         @my_screen_name_re   = new RegExp("@#{@my_screen_name} ?")
         @my_screen_name_re_g = new RegExp("@#{@my_screen_name} ?","g")
         callback? null, @my_screen_name
-
-  # # Use the (tunneled) REST API to fetch the user profile for this
-  # # bot, and populate `@my_screen_name` (and related) attribute once
-  # # the response is recieved.
-  # #
-  # # The optional `callback` is invoked when the `rest/response` payload
-  # # is returned and `@my_screen_name` is set.  The callback method's
-  # # signature is just `callback(err)`.
-  # #
-  # # Note that only one fetch-screen-name callback can be valid at one time.
-  # # If `fetch_screen_name` is called a second time before the first request
-  # # receives a callback (if any) the behavior is undefined. (Although as a
-  # # matter of practice the current behavior will be to forget about the first
-  # # request/callback and try again.)
-  # fetch_screen_name:(callback)=>
-  #   payload = {
-  #     type: "rest/request"
-  #     method: "GET"
-  #     path: "/user/-"
-  #     id: "get-user-profile-#{Date.now()}-#{Math.round(Math.random()*1000)}"
-  #   }
-  #   try
-  #     @send_payload payload
-  #     @fetch_screen_name_request_id = payload.id
-  #     @fetch_screen_name_callback = callback
-  #   catch err
-  #     @error "Error while requesting user-profile for fetch_screen_name:", payload, err
-  #
-  # # rmt/response event listener that handles responses to `fetch_screen_name`.
-  # _parse_screen_name_from_response:(payload)=>
-  #   unless @fetch_screen_name_request_id?
-  #     return
-  #   else if payload?.reply_to is @fetch_screen_name_request_id
-  #     if payload.body?.screen_name?
-  #       @my_screen_name = payload.body.screen_name
-  #       @my_screen_name_re   = new RegExp("@#{@my_screen_name} ?")
-  #       @my_screen_name_re_g = new RegExp("@#{@my_screen_name} ?","g")
-  #     @fetch_screen_name_request_id = null
-  #     callback = @fetch_screen_name_callback
-  #     @fetch_screen_name_callback = null
-  #     callback?()
 
   # posts a `ping` payload to the websocket
   send_ping:()=>
@@ -361,6 +391,7 @@ class BaseBot extends EventEmitter
       sent: Date.now()
       type:"ping"
     }
+
   # log the given message unless QUIET is set
   log:(message...)=>
     unless @config.quiet
@@ -375,6 +406,10 @@ class BaseBot extends EventEmitter
   # log the given message to STDERR
   error:(message...)=>
     LogUtil.tperr("#{@botname}",@CR("ERROR"),message...)
+
+  # log the given message to STDERR
+  warn:(message...)=>
+    LogUtil.tperr("#{@botname}",@CY("WARNNIG"),message...)
 
   # utility method for formatting a duration in millliseconds as seconds
   _format_duration:(millis,now)=>
@@ -407,7 +442,7 @@ class BaseBot extends EventEmitter
   _register_internal_listeners:()=>
     for event in ["open","error","close","message"]
       @on "ws/#{event}", @["on_ws_#{event}"]
-    for event in ["message","rest/response","hello","pong","goodbye"]
+    for event in ["message","user_typing","note","rest/response","hello","pong","goodbye"]
       @on "rtm/#{event}", @["on_rtm_#{event.replace /\//g,'_'}"]
 
   _configure_logging:(options)=>
@@ -432,8 +467,10 @@ class BaseBot extends EventEmitter
       @CB = (str)->"\x1b[1;34m#{str}\x1b[0m"
       @Cm = (str)->"\x1b[0;35m#{str}\x1b[0m"
       @CM = (str)->"\x1b[1;35m#{str}\x1b[0m"
+      @Cy = (str)->"\x1b[0;33m#{str}\x1b[0m"
+      @CY = (str)->"\x1b[1;33m#{str}\x1b[0m"
     else # else declare the equivalent methods as no-ops==
-      for f in [ "Cg", "CG", "Cr", "CR", "Cb", "CB", "Cm", "CM"]
+      for f in [ "Cg", "CG", "Cr", "CR", "Cb", "CB", "Cm", "CM", "Cy", "CY" ]
         @[f] = (x)->x
 
   _configure:(overrides, defaults)=>
@@ -489,14 +526,15 @@ class BaseBot extends EventEmitter
     #-------------------------------------------------------------------------------
     # Configure log level. Note that `QUIET` is laconic but not totally silent.
     #-------------------------------------------------------------------------------
-    c.quiet                  = Util.truthy_string(config.get("quiet") ? config.get("QUIET") ? false)
-    c.debug                  = Util.truthy_string(config.get("debug") ? config.get("DEBUG") ? (/(^|,|;)Team-?one(-?(Base-?)?Bots?)?($|,|;)/i.test(process.env.NODE_DEBUG)) )
+    c.quiet                           = Util.truthy_string(config.get("quiet") ? config.get("QUIET") ? false)
+    c.debug                           = Util.truthy_string(config.get("debug") ? config.get("DEBUG") ? (/(^|,|;)Team-?one(-?(Base-?)?Bots?)?($|,|;)/i.test(process.env.NODE_DEBUG)) )
     #-------------------------------------------------------------------------------
-    c.sigint                 = Util.truthy_string(config.get("sigint-handler") ? config.get("sigint_handler") ? config.get("sigint") ? true)
-    c.botname                = config.get("botname") ? config.get("name")
-    c.log_pid                = Util.truthy_string(config.get("log:pid") ? config.get("log-pid") ? config.get("log_pid") ? false)
-    c.log_ts                 = Util.truthy_string(config.get("log:ts") ? config.get("log-ts")  ? config.get("log_ts") ? true)
-    c.use_color              = @_should_use_color(config)
+    c.sigint                          = Util.truthy_string(config.get("sigint-handler") ? config.get("sigint_handler") ? config.get("sigint") ? true)
+    c.botname                         = config.get("botname") ? config.get("name")
+    c.log_pid                         = Util.truthy_string(config.get("log:pid") ? config.get("log-pid") ? config.get("log_pid") ? false)
+    c.log_ts                          = Util.truthy_string(config.get("log:ts") ? config.get("log-ts")  ? config.get("log_ts") ? true)
+    c.use_color                       = @_should_use_color(config)
+    c.default_ignore_duration_seconds = Util.to_int(config.get("ignore-duration-seconds")) ? 60
     #-------------------------------------------------------------------------------
     return c
 

@@ -542,6 +542,22 @@ loudBot.rest_client.getWorkspaceMembers(orgId, workspaceId, function(err, json) 
 
 See the [Intellinote Client](https://github.com/intellinote/intellinote-client) documentation for details.
 
+## Temporarily Ignoring Users
+
+When two or more bots interact, it is not unusual to get into an endless loop scenario, with each bot responding to the other indefinitely. To break out of such a loop, one bot must stop responding to the other, breaking the chain.
+
+If you suspect your bot is caught in such a loop you can use:
+
+```js
+loudBot.ignore(workspaceId, userId, durationInSeconds);
+```
+
+to automatically ignore any `rtm/message`, `rtm/note` or `rtm/user_typing` events associated with the given user and workspace, for the given duration.  These events will not be emitted (for that user and workpace) during that period.
+
+Note the `durationInSeconds` parameter is optional, it defaults to the value of configuration parameter `ignore-duration-seconds` which in turn defaults to 60 seconds.
+
+The `stop_ignoring(workspaceId, userId)` method can be used to stop ignoring a user before the "natural" time-out.
+
 ## Licensing
 
 Unless otherwise noted, all code and documentation in this module is made available
