@@ -1,3 +1,5 @@
+# Team-One BMF Version History
+
 ## Version 1.5.0 - May 18, 2017
 
  * added `my_user_id` attribute to `BaseBot`, populated by `fetch_screen_name`.
@@ -12,7 +14,7 @@
 
 ## Version 1.4.0 - May 11, 2017
 
- * added `rest_client` attribute to `BaseBot`, exposing an instance of [Intellinote Client](https://github.com/intellinote/intellinote-client) that can be used to make non-tunnelled REST API calls.
+ * New `rest_client` helper added to `BaseBot`, providing _dozens_ of convenience methods for direct (non-tunnelled) interactions with the Team-One REST API.  See [Team-One Client](https://github.com/intellinote/intellinote-client) for details.
 
 ## Version 1.3.1 - May 9, 2017
 
