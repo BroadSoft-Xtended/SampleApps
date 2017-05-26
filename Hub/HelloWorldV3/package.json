@@ -1,0 +1,36 @@
+{
+  "name": "hello-world-simple",
+  "version": "1.0.0",
+  "description": "A simple version of a Hub Integration",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BroadsoftLabs/helloWorldHubSimple.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BroadsoftLabs/helloWorldHubSimple/issues"
+  },
+  "homepage": "https://github.com/BroadsoftLabs/helloWorldHubSimple#readme",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "cookie-parser": "^1.4.3",
+    "cors": "^2.8.1",
+    "ejs": "^0.8.4",
+    "express": "^4.14.0",
+    "express-session": "^1.15.2",
+    "fs": "0.0.1-security",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.0",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^1.11.0"
+  }
+}
