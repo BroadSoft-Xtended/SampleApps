@@ -62,7 +62,7 @@ app.use(bodyParser.json());
 // This allows you to read and set cookies
 app.use(cookieParser())
 
-// returns true if the request is authenticated
+// returns true if the request contains the auth token we sent to Hub on /authenticate
 var isAuthenticated = function(req) {
   var authParam = req.query.auth || req.body.auth;
   try {
@@ -87,7 +87,7 @@ router.options('/*', function(req, res) {
 // =============================================================================
 // ROUTES FOR OUR API
 // =============================================================================
-
+// route of the micro app iframe
 router.get('/microApp', function(req, res) {
   if(!isAuthenticated(req)) {
     return res.json({message: 'you are not authenticated'});
@@ -96,6 +96,7 @@ router.get('/microApp', function(req, res) {
   res.sendFile(path.join(__dirname + '/public/microApp.html'));
 });
 
+// route of the contextual iframe - it will send the context in req.query.context
 router.get('/contextual', function(req, res) {
   if(!isAuthenticated(req)) {
     return res.json({message: 'you are not authenticated'});
@@ -126,15 +127,13 @@ router.get('/notifications', function(req, res) {
   if(!isAuthenticated(req)) {
     return res.json({message: 'you are not authenticated'});
   }
-  // const hubLogintoken = req.query.hubLogintoken;
-  // This is used to identify your user. You should save the token and associate it to a user when you authenticate the user
   console.log('We are requesting the notifications count');
   res.send(200, {count: 99});
 });
 
 // This gets called when a user tries to enable your app in the app settings page
 router.get('/authenticate', function(req, res) {
-  // re.query has a few things in it including the hub url
+  // req.query has a few things in it including the callback url
   console.log('/authenticate', req.query);
 
   // persist the callback so we know which url to call when authentication succeeds
