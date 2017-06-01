@@ -15,8 +15,15 @@ var app = express();
 var rp = require('request-promise');
 var cookieParser = require('cookie-parser')
 var session = require('express-session')
+var path = require('path');
+var _ = require('underscore');
 
-
+// hard coded auth token for demonstration purposes only
+var auth = {
+  access_token: 'asdf87sdaf798sdf987asd9f',
+  refresh_token: 'dasdfawerwqedqeqewxqwec23'
+}
+// var auth = 'dsadfasdfasdfasd'
 // =============================================================================
 // Express app configuration
 // =============================================================================
@@ -29,14 +36,18 @@ app.use(session({
 
 //You will need to enable cors in order to receive request from our servers
 app.use(cors({
-  "origin": "https://hub-sandbox.broadsoftlabs.com:8443",
+  "origin": "*",
   "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
-  "preflightContinue": true,
-  "credentials": true
+  "preflightContinue": true
 }));
 
 // If you are doing REST apis, you will need the body-parser to parse response bodies
 var bodyParser = require('body-parser');
+
+// use ejs as view engine to render contextual with context parameters
+app.engine('.html', require('ejs').__express);
+app.set('views', __dirname + '/views');
+app.set('view engine', 'html');
 
 // Allow use of webpages in the public diectory
 app.use('/', express.static(__dirname + '/public'));
@@ -51,6 +62,17 @@ app.use(bodyParser.json());
 // This allows you to read and set cookies
 app.use(cookieParser())
 
+// returns true if the request contains the auth token we sent to Hub on /authenticate
+var isAuthenticated = function(req) {
+  var authParam = req.query.auth || req.body.auth;
+  try {
+    authParam = JSON.parse(authParam);
+  } catch(error) {
+  }
+  console.log('checking authentication : ', authParam);
+  return _.isEqual(auth, authParam);
+}
+
 //8080 is the default port for heroku but you can use any port you wish
 var port = process.env.PORT || 8080; // set our port
 
@@ -64,50 +86,58 @@ router.options('/*', function(req, res) {
 
 // =============================================================================
 // ROUTES FOR OUR API
-// They currently also need /youAppName in them. We use :appName in the routes so that you can call your app anything you want in the dev portal
 // =============================================================================
+// route of the micro app iframe
+router.get('/', function(req, res) {
+  if(!isAuthenticated(req)) {
+    return res.json({message: 'you are not authenticated'});
+  }
+  console.log('You called the micro app route!');
+  res.sendFile(path.join(__dirname + '/public/microApp.html'));
+});
+
+// route of the contextual iframe - it will send the context in req.query.context
+router.get('/contextual', function(req, res) {
+  if(!isAuthenticated(req)) {
+    return res.json({message: 'you are not authenticated'});
+  }
+  var context = req.query.context;
+  try {
+    context = JSON.parse(context);
+  } catch(error) {
+    console.error('could not parse context : ', context);
+  }
+  console.log('You called the contextual route with context : ', context);
+  res.render('contextual', {
+    context: context
+  });
+});
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/test)
 router.get('/test', function(req, res) {
+  if(!isAuthenticated(req)) {
+    return res.json({message: 'you are not authenticated'});
+  }
   console.log('You called the test route!');
   res.json({message: 'hooray! welcome to our api!'});
 });
 
 // This is where you set the notifications number to be shown
-router.post('/:appName/notifications', function(req, res) {
-  // const hubLogintoken = req.query.hubLogintoken;
-  // This is used to identify your user. You should save the token and associate it to a user when you authenticate the user
+router.get('/notifications', function(req, res) {
+  if(!isAuthenticated(req)) {
+    return res.json({message: 'you are not authenticated'});
+  }
   console.log('We are requesting the notifications count');
   res.send(200, {count: 99});
 });
 
-// This is where you will set the contextual data for the user
-router.post('/:appName/timeline', function(req, res) {
-  // const hubLogintoken = req.query.hubLogintoken;
-  // This is used to identify your user. You should save the token and associate it to a user when you authenticate the user
-  console.log('We are requesting the contextual data', req.body);
-  var emails = req.body.context.emails;
-
-  var timeline = {
-    items: [{
-      date: new Date(),
-      title: 'My test record',
-      description: 'My description: user emails you are talking to:' + emails,
-      webLink: 'https://www.google.com'
-    }]
-  };
-
-  return res.json(timeline);
-});
-
 // This gets called when a user tries to enable your app in the app settings page
-router.get('/:appName/authenticate', function(req, res) {
-  // re.query has a few things in it including the hub url
+router.get('/authenticate', function(req, res) {
+  // req.query has a few things in it including the callback url
   console.log('/authenticate', req.query);
 
-  // I set the token on the session for the user so I can use it in other routes
-  req.session.appName = req.params.appName;
-  req.session.hubLoginToken = req.query.hubLoginToken;
+  // persist the callback so we know which url to call when authentication succeeds
+  req.session.callback = req.query.callback;
 
   // This is needed so the redirect does not get cached. If it is cached, it wont update on chages
   // I want users to go to my signup page once they enable the app
@@ -122,25 +152,10 @@ router.get('/:appName/authenticate', function(req, res) {
 router.post('/signupUser', function(req, res) {
   console.log('signupUser params', req.body);
 
-  // Now you have to send a post to hub with your auth token. This will get sent back to you on requests from hub.
-  var options = {
-    method: 'POST',
-    uri: 'https://core.broadsoftlabs.com/v1/' + req.session.appName + '/jodonnell@broadsoft.com/auth', // This email is the email that you want to store in Hub so that hub can send you back the hubLoginToken and auth that matches that email.
-    body: {
-      hubLoginToken: req.session.hubLoginToken,
-      auth: 'asdf87sdaf798sdf987asd9f' //This is  acustom token that I made up but you will likely want to use some token that only you can validate for the user
-    },
-    json: true
-  };
-
-  // Once you successfully send that request off to hub, you have to redirect the user to the url that hub tells you
-  // This will show the user the Hub login success page.
-  rp(options).then(function(result) {
-    res.redirect(result.url);
-  }).catch(function(error) {
-    console.log('Could not post to hub', error.message);
-    res.send(500, error);
-  })
+  // Now you have to redirect to hub with your auth token and username. This auth token will get sent back to you on requests from hub.
+  var url = req.session.callback + '?auth=' + JSON.stringify(auth) + '&username=' + req.body.username;
+  console.log('redirecting to ' + url);
+  return res.redirect(url);
 });
 
 // =============================================================================
@@ -154,56 +169,3 @@ app.use(router);
 app.listen(port);
 console.log('Magic happens on port ' + port);
 console.log('cache test2');
-
-
-// =============================================================================
-// PasspotJS Example
-// Not used in this app but is a good reference if you want to log the user in with something like google or Facebook
-// =============================================================================
-//
-// var passport = require('passport');
-// var requestPromise = require('request-promise');
-// var _ = require('underscore');
-//
-// module.exports = {
-//   trivia: [
-//     function (req, res, next) {
-//       var params = req.allParams();
-//       req.session.hubUrl = params.hubUrl;
-//       req.session.hubLoginToken = params.hubLoginToken;
-//       return passport.authenticate('trivia', sails.config.constants)(req, res, next);
-//     }
-//   ],
-//
-//   error: function (req, res) {
-//     return res.json({
-//       message: 'OAuth error'
-//     });
-//   },
-//
-//   authorize: function (req, res) {
-//     req.session.username = req.user.userProfile.emails.filter(function(email) {
-//       return email.type === 'account';
-//     })[0].value;
-//     var params = {
-//       hubLoginToken: req.session.hubLoginToken,
-//       auth: {
-//         access_token: CryptoService.encrypt(req.user.accessToken),
-//         refresh_token: CryptoService.encrypt(req.user.refreshToken)
-//       }
-//     };
-//
-//     var url = req.session.hubUrl + '/v1/trivia/' + req.session.username + '/auth';
-//     sails.log(req.session.username + ' : notifying hub of auth : ' + url + '...', params);
-//     return requestPromise({
-//       method: 'POST',
-//       uri: url,
-//       body: params,
-//       json: true
-//     }).then(function(result) {
-//       var url = result.url;
-//       sails.log(req.session.username + ' : notified - redirecting to ' + url);
-//       return res.redirect(url);
-//     });
-//   }
-// }
