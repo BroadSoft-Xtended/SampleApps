@@ -71,14 +71,15 @@ var renewAuth = function(authString) {
     var auth = JSON.parse(authString);
     var newAuth = Object.assign({}, auth, {access_token: randomString()});
     console.log('renewing auth...', auth, newAuth, user);
-    rq({
+    rp({
       method: 'PUT',
       uri: user.callback,
       body: {
-        username: user.username,
         auth: auth,
-        newAuth: newAuth
-      }
+        newAuth: newAuth,
+        username: user.username
+      },
+      json: true
     }).then(function() {
       console.log('renewed auth', auth, newAuth, user);
       delete users[authString];
@@ -93,9 +94,9 @@ var renewAuth = function(authString) {
 var isAuthenticated = function(req) {
   var auth = req.query.auth || req.body.auth && JSON.stringify(req.body.auth);
   var authenticated = !!users[auth];
-  console.log(authenticated ? 'authenticated' : 'NOT authenticated', auth);
-  // simulate renewing of auth token after 10 requests
-  if(authenticated && count++ % 10 === 0) {
+  console.log(authenticated ? 'authenticated' : 'NOT authenticated', auth, users);
+  // simulate renewing of auth token after 5 requests
+  if(authenticated && ++count % 5 === 0) {
     renewAuth(auth);
   }
   return authenticated;
@@ -116,7 +117,7 @@ router.options('/*', function(req, res) {
 // ROUTES FOR OUR API
 // =============================================================================
 // route of the micro app iframe
-router.get('/', function(req, res) {
+router.get('/microApp', function(req, res) {
   if(!isAuthenticated(req)) {
     return res.json({message: 'you are not authenticated'});
   }
