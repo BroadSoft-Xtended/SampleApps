@@ -18,12 +18,14 @@ var session = require('express-session')
 var path = require('path');
 var _ = require('underscore');
 
-// hard coded auth token for demonstration purposes only
-var auth = {
-  access_token: 'asdf87sdaf798sdf987asd9f',
-  refresh_token: 'dasdfawerwqedqeqewxqwec23'
+var randomString = function() {
+  return Math.random().toString(36).substring(7);
 }
-// var auth = 'dsadfasdfasdfasd'
+// maps auth to users (username, callback url)
+// in production apps you want to use a DB instead of this object here
+var users = {}
+// used to simulate renewing of the auth token
+var count = 0;
 // =============================================================================
 // Express app configuration
 // =============================================================================
@@ -62,15 +64,41 @@ app.use(bodyParser.json());
 // This allows you to read and set cookies
 app.use(cookieParser())
 
+// function to renew auth in hub
+var renewAuth = function(authString) {
+  try {
+    var user = users[authString];
+    var auth = JSON.parse(authString);
+    var newAuth = Object.assign({}, auth, {access_token: randomString()});
+    console.log('renewing auth...', auth, newAuth, user);
+    rq({
+      method: 'PUT',
+      uri: user.callback,
+      body: {
+        username: user.username,
+        auth: auth,
+        newAuth: newAuth
+      }
+    }).then(function() {
+      console.log('renewed auth', auth, newAuth, user);
+      delete users[authString];
+      users[JSON.stringify(newAuth)] = user;
+    })
+  } catch(error) {
+    console.error('could not update auth', auth, newAuth, user);
+    console.error(error.stack);
+  }
+};
 // returns true if the request contains the auth token we sent to Hub on /authenticate
 var isAuthenticated = function(req) {
-  var authParam = req.query.auth || req.body.auth;
-  try {
-    authParam = JSON.parse(authParam);
-  } catch(error) {
+  var auth = req.query.auth || req.body.auth && JSON.stringify(req.body.auth);
+  var authenticated = !!users[auth];
+  console.log(authenticated ? 'authenticated' : 'NOT authenticated', auth);
+  // simulate renewing of auth token after 10 requests
+  if(authenticated && count++ % 10 === 0) {
+    renewAuth(auth);
   }
-  console.log('checking authentication : ', authParam);
-  return _.isEqual(auth, authParam);
+  return authenticated;
 }
 
 //8080 is the default port for heroku but you can use any port you wish
@@ -151,6 +179,16 @@ router.get('/authenticate', function(req, res) {
 // This is the route that is called by the form in public/signup.html. It is sent by the form element in html
 router.post('/signupUser', function(req, res) {
   console.log('signupUser params', req.body);
+
+  var auth = {
+    access_token: randomString(),
+    refresh_token: randomString()
+  }
+  // persist username and callback in user which we have to provide if we want to update auth token later on
+  users[JSON.stringify(auth)] = {
+    username: req.body.username,
+    callback: req.session.callback
+  }
 
   // Now you have to redirect to hub with your auth token and username. This auth token will get sent back to you on requests from hub.
   var url = req.session.callback + '?auth=' + JSON.stringify(auth) + '&username=' + req.body.username;

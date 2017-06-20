@@ -1,7 +1,7 @@
 # Hello World
 This app will get you set up so you can display MicroApps, Contextual and Notifications in Hub.
 
-It is hosted here: https://shrouded-mountain-76886.herokuapp.com/
+It is hosted here: https://still-fjord-92377.herokuapp.com/
 
 # App Setup
 
