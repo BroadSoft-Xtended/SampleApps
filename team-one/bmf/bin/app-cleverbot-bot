@@ -1,0 +1,2 @@
+#!/bin/bash
+`dirname $0`/.via-forever "lib/cleverbot/cleverbot-bot.coffee" $1

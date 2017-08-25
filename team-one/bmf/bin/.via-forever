@@ -1,0 +1,395 @@
+#!/bin/bash
+###############################################################################
+# This is a generic script for "daemonizing" nodejs apps using 'forever'.
+# To use it, add a bash script named `app-foo` containing:
+#
+#   #!/bin/bash
+#   `dirname $0`/.via-forever "lib/foo.js" $1
+#
+# to this `bin` directory.  Make that file executable.
+#
+# Now you should be able to run:
+#
+#   ./bin/app-foo start|stop|restart|status|help
+#
+# Note that this script will handle both *.coffee and *.js files, and will use
+# the proper interpeter based upon the root file.
+###############################################################################
+
+# CONFIG
+CONFIG_DIR="./config"
+APP="${1}"
+if [[ ! -z "${1}" ]]; then
+  EXTENSIONFULL="`basename $1`"
+  EXTENSIONLESS="${EXTENSIONFULL%.*}"
+else
+  EXTENSIONFULL="`basename $0`"
+  EXTENSIONLESS="${EXTENSIONFULL%.*}"
+fi
+OUTFILE="logs/$EXTENSIONLESS.out"
+ERRFILE="logs/$EXTENSIONLESS.err"
+
+ROTATE_LOGS="./bin/rotate-logs"
+
+if command -v coffee >/dev/null 2>&1; then
+  COFFEE_EXE="coffee"
+else
+  COFFEE_EXE="./node_modules/.bin/coffee"
+fi
+
+if [ ${EXTENSIONFULL: -3} == ".js" ]; then
+  FOREVER_CMD="" # forever runs the node interpreter by default
+else
+  FOREVER_CMD="-c ${COFFEE_EXE}"
+fi
+
+if command -v forever >/dev/null 2>&1 ; then
+  FOREVER_EXE="forever"
+else
+  FOREVER_EXE="./node_modules/.bin/forever"
+fi
+
+# if this terminal supports colors, declare some
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    O="\033[38;5;214m"
+    G="\033[38;5;040m"
+    Y="\033[38;5;226m"
+    C="\033[1;34m"
+    Y2="\033[1;33m"
+    W="\033[1m"
+    N="\033[0m"
+    R="\033[1;31m"
+  fi
+fi
+
+# ROUTINES
+usage() {
+  EXTNLESSPACES=$(printf "%-${#EXTENSIONLESS}s" " ")
+  echo "${EXTENSIONLESS} daemon" >&2;
+  echo "USE:  ${EXTENSIONLESS} {status|start|stop|restart}" >&2;
+  echo "      ${EXTNLESSPACES} {help|debug|logs}" >&2;
+  echo "HELP: ${EXTENSIONLESS} help" >&2;
+}
+
+show_help() {
+  echo ""
+  echo -e "                               $O,@@@@@@@@$G%%%%%%%.$N"
+  echo -e "                              $O@@@@@@@@@$G%%%%%%%%%%$N"
+  echo -e "                              $O,@@@@@@@@\"$G%%%%%%%%%$N"
+  echo -e "                              ${Y}Q,$O@@@@@@  $G\"%%%%%%%\"$N"
+  echo -e "                               ${Y}QQQQQQQQQQb,$G%%%%$N"
+  echo -e "                                 ${Y}QQQQQQQQQQB$G%%$N"
+  echo -e "${C} oooooooooo                       ${Y}\"QQQQQQQb$G%\"     $C.oooo.$N"
+  echo -e "${C} 8'  88  \`8                                      d8P'\`Y8b$N"
+  echo -e "${C}     88    .oooo.   .ooo.   oo. .o.  .oo.       888    888 oo. .oo,  .oooo.$N"
+  echo -e "${C}     88   d88'\`88b \`P  )8b  \`88P\"Y8bP\"Y8b       888    888 \`88P\"Y8b d88'\`88b$N"
+  echo -e "${C}     88   888oo888  .oP\"88   88   88   88  888  888    888  88   88 888oo888$N"
+  echo -e "${C}     88   888   .o d8(  88   88   88   88       \`88b  d88'  88   88 888   .o$N"
+  echo -e "${C}    o88o  \`Y8bd8P' \`Y888\"8o o88o o88o o88o       \`Y8bd8P'  o88o o88o\`Y8bd8P'$N"
+  echo -e "    ${Y2}${EXTENSIONLESS} daemon manager$N"
+  echo ""
+  echo "Use this script to launch, monitor and manage the ${EXTENSIONLESS} daemon."
+  echo ""
+  echo -e "$W                                                                       RUN $N"
+  echo -e "$W---------------------------------------------------------------------------$N"
+  echo "  ${EXTENSIONLESS} <ACTION>"
+  echo "                                                                           "
+  echo -e "$W                                                          STANDARD ACTIONS $N"
+  echo -e "$W---------------------------------------------------------------------------$N"
+  echo "  restart     - stop then start the app                                    "
+  echo "  start       - launch the app                                             "
+  echo "  status      - report whether or not the app is running                   "
+  echo "  stop        - stop the app                                               "
+  echo "                                                                           "
+  echo -e "$W                                                          EXTENDED ACTIONS $N"
+  echo -e "$W---------------------------------------------------------------------------$N"
+  echo "  check-env   - perform a santity-check on the installation and report     "
+  echo "                whether or not run-time problems should be expected        "
+  echo "  clear-logs  - delete the err and out logs                                "
+  echo "  debug       - clear logs; restart; tail logs                             "
+  echo "  help        - you're looking at it                                       "
+  echo "  logs        - tail the err and out logs                                  "
+  echo "  pid         - discover the app's process ID                              "
+  echo "  rotate-logs - copy and gzip current logs; delete old log files           "
+  echo "                                                                           "
+  echo -e "$W                                                                     NOTES $N"
+  echo -e "$W---------------------------------------------------------------------------$N"
+  echo "  1. This service depends upon node.js. We recommend using 'nvm' to manage "
+  echo "     your node environment. The file .nvmrc specifies the recommended      "
+  echo "     version of node. See https://github.com/creationix/nvm#installation   "
+  echo "     or https://nodejs.org/ for help.                                      "
+  echo "                                                                           "
+  echo "  2. If you're getting 'No such file or directory'-type errors, you may    "
+  echo "     need to run 'make install' to install external dependencies.          "
+  echo "                                                                           "
+  echo "  3. Typically you'll want to set the environment variable NODE_ENV.       "
+  echo "     When NODE_ENV=FOO, the configuration is found in ./config/FOO.json.   "
+  echo "     See ./config/example.json for details.                                "
+  echo "                                                                           "
+  echo "  4. Typically you'll want to launch the daemon from the framework's root  "
+  echo "     directory (the one that contains 'bin', 'config', and 'package.json')."
+  echo "     That directory is probably: "
+  echo "         $(realpath "$(dirname "$(dirname "$0")")")"
+  echo "     (But I could be wrong.)"
+  echo ""
+}
+
+status() {
+  if is_running; then
+    echo -e "${APP} IS RUNNING.";
+  else
+    echo -e "${APP} IS NOT RUNNING.";
+  fi
+}
+
+start() {
+  # CHECK FOR NODE_ENV
+  if [[ -z "${NODE_ENV}" ]]; then
+    echo -e "${Y}!WARNING! You probably want to set the NODE_ENV environment variable.${N}"
+  fi
+  if is_running; then
+    echo -e "${R}${APP} is already running. Use 'stop' or 'restart' instead.${N}";
+    return $?
+  else
+    mkdir -p `dirname ${OUTFILE}` # make stdout log dir if it doesn't already exist
+    mkdir -p `dirname ${ERRFILE}` # make stderr log dir if it doesn't already exist
+    echo -e "Starting ${APP}..."
+    (${FOREVER_EXE} start --minUptime 500 --spinSleepTime 2000 -a -l /dev/null -o ${OUTFILE} -e ${ERRFILE} ${FOREVER_CMD} ${APP} > /dev/null) && echo "...started.";
+    return $?;
+  fi
+}
+
+nvm_use() {
+  if [ -f ~/.nvm/nvm.sh ]; then
+    if [ -f ./.nvmrc ]; then
+      . ~/.nvm/nvm.sh && nvm use
+    fi
+  fi
+}
+
+stop() {
+  if is_running; then
+    echo -e "Stopping ${APP}..."
+    (${FOREVER_EXE} stop ${APP}) && echo "...stopped."
+  else
+    echo -e "${APP} wasn't running to begin with.";
+  fi
+}
+
+reload() {
+  if is_running; then
+    PARENT_PID="`${FOREVER_EXE} list | grep ${APP} | awk '{ print \$7 }'`"
+    CHILD_PIDS="`pgrep -P ${PARENT_PID} | tr "\n" " "`"
+    echo "${CHILD_PIDS}" | xargs -n 1 |  xargs -I % sh -c '{ echo "killing %."; kill %; echo "pausing."; sleep 3; }'
+    echo "done."
+  else
+    echo -e "${APP} isn't running. Cannot reload.";
+  fi
+}
+
+clear_logs() {
+  rm -i -f "${OUTFILE}" "${ERRFILE}";
+}
+
+rotate_logs() {
+  # setup
+  ARCHIVE_PREFIX="`date +'%Y-%m-%d-%H%M%S'`-"
+  DELETE_OLD_FILES=true
+  MAX_AGE_DAYS=60
+  OUT_DIR="`dirname ${OUTFILE}`"
+  ERR_DIR="`dirname ${ERRFILE}`"
+  OUT_BNM="`basename ${OUTFILE}`"
+  ERR_BNM="`basename ${ERRFILE}`"
+  # make sure dirs exist
+  mkdir -p "${OUT_DIR}"
+  mkdir -p "${ERR_DIR}"
+  # copy current logs to archive files
+  cp "${OUTFILE}" "${OUT_DIR}/${ARCHIVE_PREFIX}${OUT_BNM}"
+  cp "${ERRFILE}" "${ERR_DIR}/${ARCHIVE_PREFIX}${ERR_BNM}"
+  # truncate current logs
+  truncate -s 0 "${OUTFILE}"
+  truncate -s 0 "${ERRFILE}"
+  # zip archives
+  gzip "${OUT_DIR}/${ARCHIVE_PREFIX}${OUT_BNM}"
+  gzip "${ERR_DIR}/${ARCHIVE_PREFIX}${ERR_BNM}"
+  # delete old files
+  if [[ $DELETE_OLD_FILES ]]; then
+    find ${OUT_DIR}/. -name *${OUT_BNM}.gz -mtime "+${MAX_AGE_DAYS}" -delete
+    find ${ERR_DIR}/. -name *${ERR_BNM}.gz -mtime "+${MAX_AGE_DAYS}" -delete
+  fi
+}
+tail_logs() {
+  tail -f "${OUTFILE}" "${ERRFILE}";
+}
+
+tail_all_logs() {
+  tail -f logs/*.err logs/*.out;
+}
+
+touch_logs() {
+  mkdir -p "`dirname ${OUTFILE}`"
+  touch "${OUTFILE}"
+  mkdir -p "`dirname ${ERRFILE}`"
+  touch "${ERRFILE}"
+}
+
+is_running() { ${FOREVER_EXE} list | grep ${APP} > /dev/null; }
+
+list() { ${FOREVER_EXE} list; }
+
+list_pids() {
+  if is_running; then
+    PARENT_PID="`${FOREVER_EXE} list | grep ${APP} | awk '{ print \$7 }'`"
+    CHILD_PIDS="`pgrep -P ${PARENT_PID} | tr "\n" " "`"
+    echo "Worker PIDs: ${CHILD_PIDS}"
+  else
+    echo -e "${APP} isn't running.";
+  fi
+}
+
+parent_pid() {
+  if is_running; then
+    PARENT_PID="`${FOREVER_EXE} list | grep ${APP} | awk '{ print \$7 }'`"
+    echo "${PARENT_PID}"
+  else
+    echo -e "${APP} isn't running.";
+  fi
+}
+
+checkenv() {
+  STATUS=0
+  echo -e "Checking prerequisites."
+
+  # CHECK FOR $1
+  if [[ ! -z "$1" ]]; then
+    echo -e "     ${G}APP: SET - $1${N}"
+  else
+    echo -e "     ${R}APP: NOT SET${N}"
+    STATUS=1
+  fi
+
+  if [[ -e "${APP}" ]]; then
+    echo -e "     ${G}APP: FOUND - ${APP}${N}"
+  else
+    echo -e "     ${R}APP: NOT FOUND - ${APP}${N}"
+    STATUS=2
+  fi
+
+  # CHECK FOR NODE_ENV
+  if [[ ! -z "${NODE_ENV}" ]]; then
+    echo -e "${G}NODE_ENV: SET - ${NODE_ENV}${N}"
+  else
+    echo -e "${Y}NODE_ENV: NOT SET${N}"
+    echo -e "${Y}!WARNING! You probably want to set the NODE_ENV environment variable.${N}"
+    STATUS=3
+  fi
+
+  # CHECK FOR config/NODE_ENV.json
+  if [[ -z "${NODE_ENV}" ]]; then
+    echo -e "    NOTE: NODE_ENV not set so skipping test of config file."
+  else
+    if [[ -e "${CONFIG_DIR}/${NODE_ENV}.json" ]]; then
+      echo -e "  ${G}CONFIG: FOUND - ${CONFIG_DIR}/${NODE_ENV}.json${N}"
+    else
+      echo -e "  ${R}CONFIG: NOT FOUND - ${CONFIG_DIR}/${NODE_ENV}.json${N}"
+      echo -e "${R}!PROBLEM! You probably want to ensure that the file ${CONFIG_DIR}/[NODE_ENV].json exists.${N}"
+      STATUS=4
+    fi
+  fi
+
+  # CHECK FOR coffee
+  if command -v ${COFFEE_EXE} >/dev/null 2>&1; then
+    echo -e "  ${G}COFFEE: FOUND - ${COFFEE_EXE}${N}"
+  else
+    echo -e "  ${R}COFFEE: NOT FOUND - ${COFFEE_EXE}${N}"
+    echo -e "${R}!PROBLEM! The coffee executable could not be found. Is it in your PATH?${N}"
+    STATUS=5
+  fi
+
+  # CHECK FOR forever
+  if command -v ${FOREVER_EXE} >/dev/null 2>&1; then
+    echo -e " ${G}FOREVER: FOUND - ${FOREVER_EXE}${N}"
+  else
+    echo -e " ${R}FOREVER: NOT FOUND - ${FOREVER_EXE}${Y}"
+    echo -e "${R}!PROBLEM! The forever executable could not be found. Is it in your PATH?${N}"
+    STATUS=6
+  fi
+
+  # REPORT STATUS
+  if [ $STATUS -ne 0 ]; then
+    echo -e "${R}!PROBLEM! Required files or programs not found.\n          The application may not work properly.${N}"
+  else
+    echo -e "${G}Everything seems to check out OK.${N}"
+  fi
+  exit $STATUS
+}
+
+if [[ -z "${1}" || -z "${2}" ]]; then
+  usage
+  exit 1
+else
+  case "$2" in
+    "nvm-use")
+      nvm_use
+      ;;
+    "status")
+      status
+      ;;
+    "start")
+      nvm_use; start;
+      ;;
+    "restart")
+      nvm_use; stop; sleep 0.6; start;
+      ;;
+    "stop")
+      stop;
+      ;;
+    "reload")
+      nvm_use; reload;
+      ;;
+    "help"|"h"|"-h"|"-help"|"--h"|"--help")
+      show_help;
+      ;;
+    "debug")
+      nvm_use; stop; sleep 0.6; clear_logs; touch_logs; start; tail_logs;
+      ;;
+    "restart-and-log"|"restart_and_log"|"restartandlog")
+      nvm_use; stop; sleep 0.6; start; touch_logs; tail_logs;
+      ;;
+    "reload-and-log"|"reload_and_log"|"reloadandlog"|"relog")
+      nvm_use; reload; touch_logs; tail_logs;
+      ;;
+    "list")
+      list;
+      ;;
+    "list-pids"|"listpids"|'list_pids'|"pids")
+      list_pids;
+      ;;
+    "pid")
+      parent_pid;
+      ;;
+    "check-env"|"checkenv"|"check_env"|"check")
+      checkenv $1
+      ;;
+    "clear-logs"|"clearlogs"|"clear_logs"|"clear")
+      clear_logs;
+      ;;
+    "tail-logs"|"taillogs"|"tail_logs"|"tail"|"logs")
+      tail_logs
+      ;;
+    "all-logs"|"alllogs"|"all_logs"|"tail-all"|"tailall"|"tail_all")
+      tail_all_logs
+      ;;
+    "rotate-logs"|"rotatelogs"|"rotate_logs"|"rotate")
+      rotate_logs;
+      ;;
+    *)
+      usage
+      exit 6
+      ;;
+  esac
+
+  exit $?
+fi
