@@ -27,7 +27,7 @@ This bot demonstrates a multi-stage conversation
 
   Get an API token for your bot from Team-One
 
-    https://app.intellinote.net/rest/account/api-tokens
+    https://app.us.team-one.com/rest/account/api-tokens
 
   Run your bot from the command line:
 

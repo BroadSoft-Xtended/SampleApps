@@ -23,13 +23,13 @@ That's it.
 
 At this stage there are a few Slack-specific features not (yet) fully represented in the "teamonebot" connector, but otherwise Team-One can act as a drop-in replacement for Slack in your bot implementation.
 
-For more information, this introduction to the [Team-One Real-Time / Bot API](https://app.intellinote.net/rest/content/rtm-how-to)
+For more information, this introduction to the [Team-One Real-Time / Bot API](https://app.us.team-one.com/rest/content/rtm-how-to)
 
 ## Creating your bot
 
 1) Create a "bot user" within Team-One / Team-One. (Or use your existing account to create a bot that acts as "you".)
 
-2) Create an API token for that user at <https://app.intellinote.net/rest/account/api-tokens>.
+2) Create an API token for that user at <https://app.us.team-one.com/rest/account/api-tokens>.
 
 3) Pass that token to the Botkit `spawn` method when launching your bot:
 
@@ -39,6 +39,6 @@ For more information, this introduction to the [Team-One Real-Time / Bot API](ht
 
 ## Non-Botkit bots
 
-The Team-One [Real-Time Messaging API](https://app.intellinote.net/rest/content/rtm-how-to) is a simple but powerful websocket-based API that supports not only chat messages, but the full scope of the Team-One collaboration and workflow management functionality.
+The Team-One [Real-Time Messaging API](https://app.us.team-one.com/rest/content/rtm-how-to) is a simple but powerful websocket-based API that supports not only chat messages, but the full scope of the Team-One collaboration and workflow management functionality.
 
 See [..tk...](#) for examples of creating bots directly with the Team-One API.

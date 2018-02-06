@@ -2,7 +2,7 @@ var https                = require("https");
 var path                 = require("path");
 var WebSocket            = require("ws");
 
-const START_HOST           = "app.intellinote.net";
+const START_HOST           = "app.us.team-one.com";
 const START_PATH           = "/rest/v2/rtms/start?event_type=message&from_me=false&at_me=true&or_matching=%2F(%5E%7C%5Cs)%5C%2F((math))(%5Cs%7C%24)%2Fi";
 
 const FILENAME             = path.basename(__filename);

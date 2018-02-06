@@ -193,7 +193,7 @@ class BotkitWorker
   _get_wss_url:(api_key,cb)=>
     requestOptions  = {
       method: "GET",
-      host: "app.intellinote.net",
+      host: "app.us.team-one.com",
       path: "/rest/v2/rtms/start",
       headers: {
         Authorization: "Bearer " + api_key

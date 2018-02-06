@@ -484,7 +484,7 @@ class BaseBot extends EventEmitter
     # you probably don't need to modify any of these values.
     #-------------------------------------------------------------------------------
     c.start_protocol         = config.get("rtm:start:protocol") ? "https"
-    c.start_host             = config.get("rtm:start:host")     ? "app.intellinote.net"
+    c.start_host             = config.get("rtm:start:host")     ? "app.us.team-one.com"
     c.start_port             = Util.to_int(config.get("rtm:start:port"))
     unless c.start_port?
       if c.start_protocol is 'https'
