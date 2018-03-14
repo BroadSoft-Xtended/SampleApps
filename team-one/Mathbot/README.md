@@ -2,7 +2,7 @@
 
 Create a bot user:
 
-POST https://app.intellinote.net/rest/v2/bot?org_id=23343
+POST https://app.us.team-one.com/rest/v2/bot?org_id=23343
 
 {"given_name": "Math", "family_name": "Bot","job_title": "Lets talk math!."}
 

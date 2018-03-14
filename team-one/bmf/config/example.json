@@ -3,7 +3,7 @@
   "rtm": {
     "start": { /* Describes the REST call used to initiate RTM session. */
       "protocol":"https",
-      "host":"app.intellinote.net",
+      "host":"app.us.team-one.com",
       "port":443,
       "path":"/rest/v2/rtms/start"
     },
@@ -21,7 +21,7 @@
    * BOT-SPECIFIC CONFIGURATION
    *
    *  - `api-key` and `team-one-api-key` are Team-One API keys.
-   *     Get one at https://app.intellinote.net/rest/account/api-tokens
+   *     Get one at https://app.us.team-one.com/rest/account/api-tokens
    *
    *  - `cleverbot-api-key` is a key to the public Cleverbot API.
    *     Get one at https://www.cleverbot.com/api/.

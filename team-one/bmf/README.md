@@ -115,7 +115,7 @@ The Team-One "API token" or "API key" is an [OAuth2 access token](https://www.oa
 
 There are a few ways to get one:
 
-  * You can [create API tokens that access your personal account](https://app.intellinote.net/rest/account/api-tokens).
+  * You can [create API tokens that access your personal account](https://app.us.team-one.com/rest/account/api-tokens).
 
   * You can use the [BroadSoft Developer's Portal](https://developer.broadsoftlabs.com/) to create a new bot account.  An API token will be generated for the bot.
 
@@ -134,7 +134,7 @@ To set-up and run these bots, you'll need:
 
     * We using recommend **[nvm](https://github.com/creationix/nvm)** to manage multiple node versions easily.  Simply [install nvm](https://github.com/creationix/nvm#install-script) then run `nvm install lts/boron` to fetch the latest LTS release.
 
-  * One or more **[Team-One](https://app.intellinote.net) API keys**.  
+  * One or more **[Team-One](https://app.us.team-one.com) API keys**.  
 
     * See ["How to get an API Token"](#how-to-get-an-api-token) for instruction on how to do that.
 
@@ -282,7 +282,7 @@ Note that `reply` is a convenience method provided by the framework.  It accepts
 
 Finally, we'll use the framework's `launch_bot` method to get the bot up and running.
 
-This method accepts two parameters -- the API token used to connect to the Team-One API and a string (or array of strings) defining the [filter parameters](https://app.intellinote.net/rest/content/rtm-how-to#event-filtering-parameters) that determine which messages our bot will receive from the RTM API.
+This method accepts two parameters -- the API token used to connect to the Team-One API and a string (or array of strings) defining the [filter parameters](https://app.us.team-one.com/rest/content/rtm-how-to#event-filtering-parameters) that determine which messages our bot will receive from the RTM API.
 
 We'll read the API key from the command line (and report an error if it is missing):
 
@@ -360,9 +360,9 @@ As suggested in the log messages itself, these actions will repeat, creating sim
 
 These correspond to extra RTM API calls that the `BaseBot` will (by default) trigger on a regular interval.
 
-The first set (`type:pong`) represents a periodic "heartbeat" signal that our bot uses to keep the websocket connection from timing-out either at the RTM server or in some networking tier between our bot and that server.  To create this heartbeat our bot submits a `ping` message roughly every 30 seconds, and outputs that message to the log when it receives the `pong` response.  [See the RTM API documentation for more information about `ping` and `pong` messages.](https://app.intellinote.net/rest/content/rtm-how-to#ping-pong)
+The first set (`type:pong`) represents a periodic "heartbeat" signal that our bot uses to keep the websocket connection from timing-out either at the RTM server or in some networking tier between our bot and that server.  To create this heartbeat our bot submits a `ping` message roughly every 30 seconds, and outputs that message to the log when it receives the `pong` response.  [See the RTM API documentation for more information about `ping` and `pong` messages.](https://app.us.team-one.com/rest/content/rtm-how-to#ping-pong)
 
-The second set (`type:rest/request`) represents a periodic RTM message that our bot posts to set the bot's presence status to "online".  This will allow the bot to appear active with the Team-One application whether or not it has recently sent or received any chat messages.  Doing this consistently gives end-users an easy way to tell whether or not the bot is running and listening.  This update is performed by calling the  [`PUT /user/-/presence` REST method](https://app.intellinote.net/rest/api/v2/#!/users/put_user_presence) by [tunneling the request thru the RTM API](https://app.intellinote.net/rest/content/rtm-how-to#rest-api-tunneling). Since Team-One will allow a user to be idle for a little while before flagging them as offline this message only needs to be repeated every 10 minutes or so.
+The second set (`type:rest/request`) represents a periodic RTM message that our bot posts to set the bot's presence status to "online".  This will allow the bot to appear active with the Team-One application whether or not it has recently sent or received any chat messages.  Doing this consistently gives end-users an easy way to tell whether or not the bot is running and listening.  This update is performed by calling the  [`PUT /user/-/presence` REST method](https://app.us.team-one.com/rest/api/v2/#!/users/put_user_presence) by [tunneling the request thru the RTM API](https://app.us.team-one.com/rest/content/rtm-how-to#rest-api-tunneling). Since Team-One will allow a user to be idle for a little while before flagging them as offline this message only needs to be repeated every 10 minutes or so.
 
 Both of these behaviors can be controlled by properties in the configuration files found in `config`.  See [the next section](#configuration-management) for more information about using the configuration framework.
 

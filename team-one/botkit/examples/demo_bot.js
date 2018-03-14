@@ -4,30 +4,34 @@
           \ \  __<   \ \ \/\ \  \/_/\ \/ \ \  _"-.  \ \ \  \/_/\ \/
            \ \_____\  \ \_____\    \ \_\  \ \_\ \_\  \ \_\    \ \_\
             \/_____/   \/_____/     \/_/   \/_/\/_/   \/_/     \/_/
-
-                _     ____  ____   __   _  _        __   __ _  ____
-               ( )   (_  _)(  __) / _\ ( \/ ) ___  /  \ (  ( \(  __)
-              (_ _)    )(   ) _) /    \/ \/ \(___)(  O )/    / ) _)
-               (_)    (__) (____)\_/\_/\_)(_/      \__/ \_)__)(____)
+               _     ____  ____   __   _  _        __   __ _  ____
+              ( )   (_  _)(  __) / _\ ( \/ ) ___  /  \ (  ( \(  __)
+             (_ _)    )(   ) _) /    \/ \/ \(___)(  O )/    / ) _)
+              (_)    (__) (____)\_/\_/\_)(_/      \__/ \_)__)(____)
 
 This is a sample Team-One bot built with Botkit.
 
-The contents of this file are a very slight variation of the [`convo-bot.js`
-file](https://github.com/howdyai/botkit/blob/master/examples/convo_bot.js)
+The contents of this file are a very slight variation of the [`demo-bot.js`
+file](https://github.com/howdyai/botkit/blob/master/examples/demo_bot.js)
 found in the [Botkit repository](https://github.com/howdyai/botkit).
 
 The only changes made relative to the original file
-([rev 2325e9b]https://github.com/howdyai/botkit/commit/2325e9b138346b4435a0f850617c53bb700b9f7a) to be exact)
+([rev 6f3179f](https://github.com/howdyai/botkit/commit/6f3179ff40b308ba3d9516e8faf74a6e16146c76) to be exact)
 are in this comment and in the two lines used to load and create the Team-One
 connector (rather than the Slack connector used in the origanl file.)
 
-This bot demonstrates a multi-stage conversation
+This bot demonstrates many of the core features of Botkit:
+
+* Connect to Team-One using the real time API
+* Receive messages based on "spoken" patterns
+* Send a message with attachments
+* Send a message via direct message (instead of in a public channel)
 
 # RUN THE BOT:
 
   Get an API token for your bot from Team-One
 
-    https://app.intellinote.net/rest/account/api-tokens
+    -> https://app.us.team-one.com/rest/account/api-tokens
 
   Run your bot from the command line:
 
@@ -35,25 +39,21 @@ This bot demonstrates a multi-stage conversation
 
 # USE THE BOT:
 
-  Find your bot inside Team-One
+  Find your bot inside Slack to send it a direct message.
 
-  Say: "pizzatime"
+  Say: "Hello"
 
-  The bot will reply "What flavor of pizza do you want?"
+  The bot will reply "Hello!"
 
-  Say what flavor you want.
+  Say: "Attach"
 
-  The bot will reply "Awesome" "What size do you want?"
+  The bot will send a message with an attachment.
 
-  Say what size you want.
+  Send: "dm me"
 
-  The bot will reply "Ok." "So where do you want it delivered?"
+  The bot will reply with a direct message.
 
-  Say where you want it delivered.
-
-  The bot will reply "Ok! Goodbye."
-
-  ...and will refrain from billing your card because this is just a demo :P
+  Make sure to invite your bot into other channels!
 
 # EXTEND THE BOT:
 
@@ -70,7 +70,7 @@ This bot demonstrates a multi-stage conversation
 // find in the original file, since we want to create a `teamonebot` instance
 // rather than a `slackbot` instance.  Otherwise the contents of this file are
 // unchanged from the original at
-// <https://github.com/howdyai/botkit/blob/master/examples/convo_bot.js>.
+// <https://github.com/howdyai/botkit/blob/master/examples/demo_bot.js>.
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 // There are a couple of ways to load Botkit with Team-One support:
@@ -98,7 +98,7 @@ var controller = Botkit.teamonebot({ debug: false });
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // From this point down, the code in this file has not been changed from that
 // found in the original at
-// <https://github.com/howdyai/botkit/blob/master/examples/convo_bot.js>.
+// <https://github.com/howdyai/botkit/blob/master/examples/demo_bot.js>.
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if (!process.env.token) {
@@ -114,27 +114,55 @@ controller.spawn({
   }
 });
 
-controller.hears(['pizzatime'],['ambient'],function(bot,message) {
-  bot.startConversation(message, askFlavor);
+
+controller.hears(['hello','hi'],['direct_message','direct_mention','mention'],function(bot,message) {
+    bot.reply(message,"Hello.");
 });
 
-askFlavor = function(response, convo) {
-  convo.ask("What flavor of pizza do you want?", function(response, convo) {
-    convo.say("Awesome.");
-    askSize(response, convo);
-    convo.next();
+controller.hears(['attach'],['direct_message','direct_mention'],function(bot,message) {
+
+  var attachments = [];
+  var attachment = {
+    title: 'This is an attachment',
+    color: '#FFCC99',
+    fields: [],
+  };
+
+  attachment.fields.push({
+    label: 'Field',
+    value: 'A longish value',
+    short: false,
   });
-}
-askSize = function(response, convo) {
-  convo.ask("What size do you want?", function(response, convo) {
-    convo.say("Ok.")
-    askWhereDeliver(response, convo);
-    convo.next();
+
+  attachment.fields.push({
+    label: 'Field',
+    value: 'Value',
+    short: true,
   });
-}
-askWhereDeliver = function(response, convo) {
-  convo.ask("So where do you want it delivered?", function(response, convo) {
-    convo.say("Ok! Goodbye.");
-    convo.next();
+
+  attachment.fields.push({
+    label: 'Field',
+    value: 'Value',
+    short: true,
   });
-}
+
+  attachments.push(attachment);
+
+  bot.reply(message,{
+    text: 'See below...',
+    attachments: attachments,
+  },function(err,resp) {
+    console.log(err,resp);
+  });
+});
+
+controller.hears(['dm me'],['direct_message','direct_mention'],function(bot,message) {
+  bot.startConversation(message,function(err,convo) {
+    convo.say('Heard ya');
+  });
+
+  bot.startPrivateConversation(message,function(err,dm) {
+    dm.say('Private reply!');
+  });
+
+});

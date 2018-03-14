@@ -88,7 +88,7 @@ js: node_modules $(COFFEE_JS) $(COFFEE_TEST_JS) $(COFFEE_SPEC_JS)
 	@# make that .js file executable
 	@# TODO it might be better to restrict this to the same list of files
 	@#      found in the 'bin' target, but since this only applies to
-	@#      *.coffee-sourced files we happen to know that it is save to to this.
+	@#      *.coffee-sourced files we happen to know that it is safe to to this.
 	@echo '#!/usr/bin/env node' >> $@.tmp
 	@cat $@ >> $@.tmp
 	@mv $@.tmp $@
@@ -110,7 +110,7 @@ bin: clean-bin js
 	@$(shell \
 	  cd bin \
 		&& ln -s ../lib/basic/basic-bot-coffee.js basic-bot-coffee \
-		&& ln -s ../lib/basic/basic-bot-js.js basic-bot-js \
+		&& ln -s ../lib/basic/basic-bot-coffee.js basic-bot-coffee \
 		&& ln -s ../lib/cleverbot/cleverbot-bot.js cleverbot-bot \
 		&& ln -s ../lib/eliza/eliza-bot.js eliza-bot \
 		&& ln -s ../lib/coin-flip/coin-flip-bot.js coin-flip-bot \
