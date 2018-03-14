@@ -195,7 +195,7 @@ router.post('/signupUser', function(req, res) {
   // Now you have to redirect to hub with your auth token and username. This auth token will get sent back to you on requests from hub.
   var url = urlParser.parse(req.session.callback, true);
   url.query = Object.assign({}, url.query, {
-    auth: encodeURIComponent(JSON.stringify(auth)),
+    auth: JSON.stringify(auth),
     username: req.body.username
   });
   url.search = '';
