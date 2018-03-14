@@ -17,6 +17,7 @@ var cookieParser = require('cookie-parser')
 var session = require('express-session')
 var path = require('path');
 var _ = require('underscore');
+var urlParser = require('url');
 
 var randomString = function() {
   return Math.random().toString(36).substring(7);
@@ -192,7 +193,13 @@ router.post('/signupUser', function(req, res) {
   }
 
   // Now you have to redirect to hub with your auth token and username. This auth token will get sent back to you on requests from hub.
-  var url = req.session.callback + '?auth=' + JSON.stringify(auth) + '&username=' + req.body.username;
+  var url = urlParser.parse(req.session.callback, true);
+  url.query = Object.assign({}, url.query, {
+    auth: encodeURIComponent(JSON.stringify(auth)),
+    username: req.body.username
+  });
+  url.search = '';
+  url = urlParser.format(url);
   console.log('redirecting to ' + url);
   return res.redirect(url);
 });
