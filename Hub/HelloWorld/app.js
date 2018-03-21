@@ -200,7 +200,7 @@ router.post('/signupUser', function(req, res) {
   });
   url.search = '';
   url = urlParser.format(url);
-  console.log('redirecting to ' + url);
+  console.log('redirecting to hub : ' + url);
   return res.redirect(url);
 });
 
